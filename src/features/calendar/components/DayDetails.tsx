@@ -25,19 +25,19 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import type { Task, Priority, Subtask, Recurrence } from "@/types";
 import { cn } from "@/lib/utils";
 
-interface DaySidebarProps {
+interface DayDetailsProps {
   date: Date | null;
   isOpen: boolean;
   onClose: () => void;
   initialExpandedTaskId?: string | null;
 }
 
-export function DaySidebar({
+export function DayDetails({
   date,
   isOpen,
   onClose,
   initialExpandedTaskId,
-}: DaySidebarProps) {
+}: DayDetailsProps) {
   // Added bulkUpdateTasks from the store
   const {
     tasks,

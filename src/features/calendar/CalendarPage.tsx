@@ -18,7 +18,7 @@ import {
   isTaskOnDate,
   isTaskCompletedOnDate,
 } from "@/features/tasks/utils/task.utils";
-import { DaySidebar } from "./components/DaySidebar";
+import { DayDetails } from "./components/DayDetails";
 
 export default function CalendarPage() {
   const { openMobileMenu } = useUiStore();
@@ -236,7 +236,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <DaySidebar
+      <DayDetails
         date={selectedDate}
         isOpen={!!selectedDate}
         onClose={() => setSelectedDate(null)}
