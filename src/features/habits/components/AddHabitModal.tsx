@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Target, ChevronDown, ChevronRight } from "lucide-react";
+import { useGoalsStore } from "@/features/goals/store/goals.store";
 import { format } from "date-fns";
 import { useHabitsStore } from "../store/habits.store";
 import { Select } from "@/components/ui/Select";
@@ -42,9 +43,28 @@ export function AddHabitModal({
   const [goalPreset, setGoalPreset] = useState("21");
   const [customGoal, setCustomGoal] = useState(21);
 
+  // NEW: Goal Integration State
+  const [linkedGoalId, setLinkedGoalId] = useState<string>("none");
+  const [goalContribution, setGoalContribution] = useState<number | "">(1);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  const goals = useGoalsStore((state) => state.goals);
+  const goalOptions = [
+    {
+      value: "none",
+      label: "No Goal",
+      icon: <Target className="w-4 h-4 text-text-secondary" />,
+    },
+    ...goals.map((g) => ({
+      value: g.id,
+      label: g.title,
+      icon: <Target className="w-4 h-4 text-blue-500" />,
+    })),
+  ];
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const [prevHabitId, setPrevHabitId] = useState(habitIdToEdit);
 
+  
   if (isOpen !== prevIsOpen || habitIdToEdit !== prevHabitId) {
     setPrevIsOpen(isOpen);
     setPrevHabitId(habitIdToEdit);
@@ -63,6 +83,9 @@ export function AddHabitModal({
           setDaysPerWeek(existingHabit.frequency.daysPerWeek || 5);
           setIntervalDays(existingHabit.frequency.intervalDays || 3);
           setGoalType(existingHabit.goal.type);
+          setLinkedGoalId(existingHabit.linkedGoalId || "none");
+          setGoalContribution(existingHabit.goalContribution || 1);
+          setIsAdvancedOpen(!!existingHabit.linkedGoalId);
 
           if (existingHabit.goal.type === "cycle" && existingHabit.goal.days) {
             const isPreset = ["7", "21", "30", "100"].includes(
@@ -89,6 +112,9 @@ export function AddHabitModal({
         setGoalType("forever");
         setGoalPreset("21");
         setCustomGoal(21);
+        setLinkedGoalId("none");
+        setGoalContribution(1);
+        setIsAdvancedOpen(false);
       }
     }
   }
@@ -117,6 +143,9 @@ export function AddHabitModal({
               : parseInt(goalPreset)
             : undefined,
       },
+      linkedGoalId: linkedGoalId === "none" ? undefined : linkedGoalId,
+      goalContribution:
+        linkedGoalId === "none" ? undefined : Number(goalContribution),
     };
 
     if (habitIdToEdit) {
@@ -364,6 +393,62 @@ export function AddHabitModal({
                     onChange={(e) => setCustomGoal(Number(e.target.value))}
                     className="w-20 bg-background-surface border border-border-subtle rounded-lg px-2 py-1 text-center font-bold text-text-primary outline-none"
                   />
+                </div>
+              )}
+            </div>
+
+{/* Advanced Settings: Goal Linkage */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+                className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              >
+                {isAdvancedOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+                Advanced Settings
+              </button>
+
+              {isAdvancedOpen && (
+                <div className="mt-4 space-y-4 p-4 bg-background-main/30 border border-border-subtle rounded-xl animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center">
+                    <span className="w-32 text-sm text-text-secondary">
+                      Contributes To
+                    </span>
+                    <div className="flex-1">
+                      <Select
+                        value={linkedGoalId}
+                        onChange={(val) => setLinkedGoalId(val)}
+                        options={goalOptions}
+                        align="right"
+                      />
+                    </div>
+                  </div>
+
+                  {linkedGoalId !== "none" && (
+                    <div className="flex items-center animate-in fade-in">
+                      <span className="w-32 text-sm text-text-secondary">
+                        Contribution
+                      </span>
+                      <div className="flex-1 flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={goalContribution}
+                          onChange={(e) =>
+                            setGoalContribution(Number(e.target.value))
+                          }
+                          className="w-20 bg-background-main border border-border-subtle rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary outline-none focus:ring-2 focus:ring-accent-primary/20 transition-all"
+                        />
+                        <span className="text-xs font-medium text-text-secondary">
+                          added per completion
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

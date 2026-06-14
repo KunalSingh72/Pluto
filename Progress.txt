@@ -292,15 +292,16 @@ import { NAVIGATION_LINKS } from "@/config/navigation";
 import { useUiStore } from "@/stores/ui.store";
 
 export default function MobileHeader() {
-  const { theme, toggleTheme } = useTheme();
-  const { isMobileMenuOpen, openMobileMenu, closeMobileMenu } = useUiStore();
-  const location = useLocation();
+  const { theme, toggleTheme } = useTheme();const isMobileMenuOpen = useUiStore((state) => state.isMobileMenuOpen);
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const closeMobileMenu = useUiStore((state) => state.closeMobileMenu);  const location = useLocation();
 
   const isFullScreenPage = [
     "/tasks",
     "/notes",
     "/calendar",
     "/habits",
+    "/goals",
   ].includes(location.pathname);
 
   return (
@@ -978,8 +979,9 @@ import {
 import { DayDetails } from "./components/DayDetails";
 
 export default function CalendarPage() {
-  const { openMobileMenu } = useUiStore();
-  const { tasks, categories } = useTasksStore();
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const tasks = useTasksStore((state) => state.tasks);
+  const categories = useTasksStore((state) => state.categories);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -1244,15 +1246,12 @@ export function DayDetails({
   onClose,
   initialExpandedTaskId,
 }: DayDetailsProps) {
-  // Added bulkUpdateTasks from the store
-  const {
-    tasks,
-    categories,
-    addTask,
-    updateTask,
-    deleteTask,
-    bulkUpdateTasks,
-  } = useTasksStore();
+  const tasks = useTasksStore((state) => state.tasks);
+  const categories = useTasksStore((state) => state.categories);
+  const addTask = useTasksStore((state) => state.addTask);
+  const updateTask = useTasksStore((state) => state.updateTask);
+  const deleteTask = useTasksStore((state) => state.deleteTask);
+  const bulkUpdateTasks = useTasksStore((state) => state.bulkUpdateTasks);
 
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
@@ -1757,9 +1756,9 @@ import { cn } from "@/lib/utils";
 type HabitView = "daily" | "all";
 
 export default function HabitPage() {
-  const { openMobileMenu } = useUiStore();
-  const { habits, bulkDeleteHabits } = useHabitsStore();
-
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const habits = useHabitsStore((state) => state.habits);
+  const bulkDeleteHabits = useHabitsStore((state) => state.bulkDeleteHabits);
   const [activeView, setActiveView] = useState<HabitView>("daily");
   const [selectedDate, setSelectedDate] = useState<Date>(
     startOfDay(new Date()),
@@ -2011,7 +2010,8 @@ export default function HabitPage() {
 --------
 AddHabitModal.tsx
 import { useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Target, ChevronDown, ChevronRight } from "lucide-react";
+import { useGoalsStore } from "@/features/goals/store/goals.store";
 import { format } from "date-fns";
 import { useHabitsStore } from "../store/habits.store";
 import { Select } from "@/components/ui/Select";
@@ -2054,9 +2054,28 @@ export function AddHabitModal({
   const [goalPreset, setGoalPreset] = useState("21");
   const [customGoal, setCustomGoal] = useState(21);
 
+  // NEW: Goal Integration State
+  const [linkedGoalId, setLinkedGoalId] = useState<string>("none");
+  const [goalContribution, setGoalContribution] = useState<number | "">(1);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  const goals = useGoalsStore((state) => state.goals);
+  const goalOptions = [
+    {
+      value: "none",
+      label: "No Goal",
+      icon: <Target className="w-4 h-4 text-text-secondary" />,
+    },
+    ...goals.map((g) => ({
+      value: g.id,
+      label: g.title,
+      icon: <Target className="w-4 h-4 text-blue-500" />,
+    })),
+  ];
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const [prevHabitId, setPrevHabitId] = useState(habitIdToEdit);
 
+  
   if (isOpen !== prevIsOpen || habitIdToEdit !== prevHabitId) {
     setPrevIsOpen(isOpen);
     setPrevHabitId(habitIdToEdit);
@@ -2075,6 +2094,9 @@ export function AddHabitModal({
           setDaysPerWeek(existingHabit.frequency.daysPerWeek || 5);
           setIntervalDays(existingHabit.frequency.intervalDays || 3);
           setGoalType(existingHabit.goal.type);
+          setLinkedGoalId(existingHabit.linkedGoalId || "none");
+          setGoalContribution(existingHabit.goalContribution || 1);
+          setIsAdvancedOpen(!!existingHabit.linkedGoalId);
 
           if (existingHabit.goal.type === "cycle" && existingHabit.goal.days) {
             const isPreset = ["7", "21", "30", "100"].includes(
@@ -2101,6 +2123,9 @@ export function AddHabitModal({
         setGoalType("forever");
         setGoalPreset("21");
         setCustomGoal(21);
+        setLinkedGoalId("none");
+        setGoalContribution(1);
+        setIsAdvancedOpen(false);
       }
     }
   }
@@ -2129,6 +2154,9 @@ export function AddHabitModal({
               : parseInt(goalPreset)
             : undefined,
       },
+      linkedGoalId: linkedGoalId === "none" ? undefined : linkedGoalId,
+      goalContribution:
+        linkedGoalId === "none" ? undefined : Number(goalContribution),
     };
 
     if (habitIdToEdit) {
@@ -2376,6 +2404,62 @@ export function AddHabitModal({
                     onChange={(e) => setCustomGoal(Number(e.target.value))}
                     className="w-20 bg-background-surface border border-border-subtle rounded-lg px-2 py-1 text-center font-bold text-text-primary outline-none"
                   />
+                </div>
+              )}
+            </div>
+
+{/* Advanced Settings: Goal Linkage */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+                className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              >
+                {isAdvancedOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+                Advanced Settings
+              </button>
+
+              {isAdvancedOpen && (
+                <div className="mt-4 space-y-4 p-4 bg-background-main/30 border border-border-subtle rounded-xl animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center">
+                    <span className="w-32 text-sm text-text-secondary">
+                      Contributes To
+                    </span>
+                    <div className="flex-1">
+                      <Select
+                        value={linkedGoalId}
+                        onChange={(val) => setLinkedGoalId(val)}
+                        options={goalOptions}
+                        align="right"
+                      />
+                    </div>
+                  </div>
+
+                  {linkedGoalId !== "none" && (
+                    <div className="flex items-center animate-in fade-in">
+                      <span className="w-32 text-sm text-text-secondary">
+                        Contribution
+                      </span>
+                      <div className="flex-1 flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={goalContribution}
+                          onChange={(e) =>
+                            setGoalContribution(Number(e.target.value))
+                          }
+                          className="w-20 bg-background-main border border-border-subtle rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary outline-none focus:ring-2 focus:ring-accent-primary/20 transition-all"
+                        />
+                        <span className="text-xs font-medium text-text-secondary">
+                          added per completion
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -3378,6 +3462,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { format, isAfter, startOfDay, parseISO } from "date-fns";
 import type { Habit } from "@/types";
+import { useGoalsStore } from "@/features/goals/store/goals.store"; // ADD IMPORT
 
 interface HabitsState {
   habits: Habit[];
@@ -3390,8 +3475,8 @@ interface HabitsState {
 
 export const useHabitsStore = create<HabitsState>()(
   persist(
-    (set) => ({
-      habits: [] as Habit[], // FIXED: Explicitly cast the empty array
+    (set, get) => ({ // ADD 'get' to access current state
+      habits: [] as Habit[],
       
       addHabit: (habit) => set((state) => ({ 
         habits: [habit, ...state.habits] 
@@ -3409,30 +3494,48 @@ export const useHabitsStore = create<HabitsState>()(
         habits: state.habits.filter((h) => !ids.includes(h.id))
       })),
       
-      toggleHabitCompletionOnDate: (id, date) => set((state) => ({
-        habits: state.habits.map((h) => {
-          if (h.id !== id) return h;
-          
-          // PROTECT HISTORICAL CYCLES: Cannot uncheck dates that belong to an already completed cycle
-          const lastCycleEndDateStr = h.pastCycles?.length 
-            ? h.pastCycles[h.pastCycles.length - 1].endDate 
-            : null;
-            
-          if (lastCycleEndDateStr && !isAfter(startOfDay(date), startOfDay(parseISO(lastCycleEndDateStr)))) {
-            return h; 
-          }
+      toggleHabitCompletionOnDate: (id, date) => {
+        const state = get();
+        const h = state.habits.find((x) => x.id === id);
+        if (!h) return;
 
-          const dateString = format(date, "yyyy-MM-dd");
-          const isCompleted = h.completedDates.includes(dateString);
+        // PROTECT HISTORICAL CYCLES
+        const lastCycleEndDateStr = h.pastCycles?.length 
+          ? h.pastCycles[h.pastCycles.length - 1].endDate 
+          : null;
+
+        if (lastCycleEndDateStr && !isAfter(startOfDay(date), startOfDay(parseISO(lastCycleEndDateStr)))) {
+          return;
+        }
+
+        const dateString = format(date, "yyyy-MM-dd");
+        const isCompleted = h.completedDates.includes(dateString);
+
+        // INTERCEPT: Automate Goal Progress
+        if (h.linkedGoalId && h.linkedGoalId !== "none") {
+          const contribution = h.goalContribution || 1;
+          const goalsStore = useGoalsStore.getState();
+          const goal = goalsStore.goals.find((g) => g.id === h.linkedGoalId);
           
-          return {
-            ...h,
-            completedDates: isCompleted 
-              ? h.completedDates.filter(d => d !== dateString) 
-              : [...h.completedDates, dateString].sort() 
-          };
-        })
-      })),
+          if (goal) {
+            // If already completed, we are un-checking -> subtract. Otherwise, add.
+            const modifier = isCompleted ? -contribution : contribution;
+            goalsStore.updateProgress(goal.id, goal.currentValue + modifier, "habit", id);
+          }
+        }
+
+        set((state) => ({
+          habits: state.habits.map((habit) => {
+            if (habit.id !== id) return habit;
+            return {
+              ...habit,
+              completedDates: isCompleted 
+                ? habit.completedDates.filter(d => d !== dateString) 
+                : [...habit.completedDates, dateString].sort() 
+            };
+          })
+        }));
+      },
     }),
     { name: "life-tracker-habits" }
   )
@@ -3596,8 +3699,11 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 type NotesView = "active" | "trash";
 
 export default function NotesPage() {
-  const { openMobileMenu } = useUiStore();
-  const { notes, addNote, cleanOldTrash, softDeleteMultiple } = useNotesStore();
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const notes = useNotesStore((state) => state.notes);
+  const addNote = useNotesStore((state) => state.addNote);
+  const cleanOldTrash = useNotesStore((state) => state.cleanOldTrash);
+  const softDeleteMultiple = useNotesStore((state) => state.softDeleteMultiple);
 
   const [activeView, setActiveView] = useState<NotesView>("active");
   const [prevActiveView, setPrevActiveView] = useState<NotesView>("active");
@@ -4512,16 +4618,16 @@ const getMobileMenuOptions = (counts: {
 ];
 
 export default function TasksPage() {
-  const { openMobileMenu } = useUiStore();
-  const {
-    tasks,
-    addTask,
-    updateTask,
-    deleteTask,
-    bulkUpdateTasks,
-    bulkDeleteTasks,
-    toggleTaskCompletionOnDate,
-  } = useTasksStore();
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const tasks = useTasksStore((state) => state.tasks);
+  const addTask = useTasksStore((state) => state.addTask);
+  const updateTask = useTasksStore((state) => state.updateTask);
+  const deleteTask = useTasksStore((state) => state.deleteTask);
+  const bulkUpdateTasks = useTasksStore((state) => state.bulkUpdateTasks);
+  const bulkDeleteTasks = useTasksStore((state) => state.bulkDeleteTasks);
+  const toggleTaskCompletionOnDate = useTasksStore(
+    (state) => state.toggleTaskCompletionOnDate,
+  );
 
   const [activeView, setActiveView] = useState<TaskView>("today");
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -5032,6 +5138,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { format } from "date-fns";
 import type { Task, Category } from "@/types";
+import { useGoalsStore } from "@/features/goals/store/goals.store"; // ADD THIS IMPORT
 
 interface TasksState {
   tasks: Task[];
@@ -5041,7 +5148,7 @@ interface TasksState {
   deleteTask: (id: string) => void;
   bulkUpdateTasks: (ids: string[], updates: Partial<Task>) => void;
   bulkDeleteTasks: (ids: string[]) => void;
-  toggleTaskCompletionOnDate: (id: string, date: Date) => void; // NEW
+  toggleTaskCompletionOnDate: (id: string, date: Date) => void;
   addCategory: (category: Category) => void;
   updateCategory: (id: string, updates: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
@@ -5049,7 +5156,7 @@ interface TasksState {
 
 export const useTasksStore = create<TasksState>()(
   persist(
-    (set) => ({
+    (set, get) => ({ // ADD 'get' to the persist arguments
       tasks: [],
       categories: [
         { id: "cat-work", name: "Work", color: "bg-blue-500" },
@@ -5057,9 +5164,31 @@ export const useTasksStore = create<TasksState>()(
         { id: "cat-family", name: "Family", color: "bg-yellow-500" }
       ],
       addTask: (task) => set((state) => ({ tasks: [task, ...state.tasks] })),
-      updateTask: (id, updates) => set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      })),
+      
+      updateTask: (id, updates) => {
+        const state = get();
+        const t = state.tasks.find(x => x.id === id);
+        
+        // INTERCEPT: Automate Goal Progress if completion status is directly updated
+        if (t && updates.completed !== undefined && updates.completed !== t.completed) {
+            const goalId = updates.goalId !== undefined ? updates.goalId : t.goalId;
+            const contribution = updates.goalContribution !== undefined ? updates.goalContribution : (t.goalContribution || 1);
+            
+            if (goalId && goalId !== "none") {
+                const goalsStore = useGoalsStore.getState();
+                const goal = goalsStore.goals.find(g => g.id === goalId);
+                if (goal) {
+                    const modifier = updates.completed ? contribution : -contribution;
+                    goalsStore.updateProgress(goal.id, goal.currentValue + modifier, "task", id);
+                }
+            }
+        }
+
+        set((state) => ({
+            tasks: state.tasks.map((task) => (task.id === id ? { ...task, ...updates } : task))
+        }));
+      },
+      
       deleteTask: (id) => set((state) => ({
         tasks: state.tasks.filter((t) => t.id !== id)
       })),
@@ -5070,24 +5199,50 @@ export const useTasksStore = create<TasksState>()(
         tasks: state.tasks.filter(t => !ids.includes(t.id))
       })),
       
-      // NEW: Intelligent completion toggler
-      toggleTaskCompletionOnDate: (id, date) => set((state) => ({
-        tasks: state.tasks.map((t) => {
-          if (t.id !== id) return t;
-          if (t.recurrence === "none" || !t.recurrence) {
-            return { ...t, completed: !t.completed };
-          }
+      toggleTaskCompletionOnDate: (id, date) => {
+        const state = get();
+        const t = state.tasks.find((x) => x.id === id);
+        if (!t) return;
+
+        const isNonRecurring = t.recurrence === "none" || !t.recurrence;
+        let isNowCompleted = false;
+
+        if (isNonRecurring) {
+          isNowCompleted = !t.completed;
+        } else {
           const dateString = format(date, "yyyy-MM-dd");
           const completedDates = t.completedDates || [];
-          const isCompleted = completedDates.includes(dateString);
-          return {
-            ...t,
-            completedDates: isCompleted 
-              ? completedDates.filter(d => d !== dateString) 
-              : [...completedDates, dateString]
-          };
-        })
-      })),
+          isNowCompleted = !completedDates.includes(dateString);
+        }
+
+        // INTERCEPT: Automate Goal Progress
+        if (t.goalId && t.goalId !== "none") {
+          const contribution = t.goalContribution || 1;
+          const goalsStore = useGoalsStore.getState();
+          const goal = goalsStore.goals.find((g) => g.id === t.goalId);
+          if (goal) {
+            const modifier = isNowCompleted ? contribution : -contribution;
+            goalsStore.updateProgress(goal.id, goal.currentValue + modifier);
+          }
+        }
+
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id !== id) return task;
+            if (isNonRecurring) {
+              return { ...task, completed: isNowCompleted };
+            }
+            const dateString = format(date, "yyyy-MM-dd");
+            const completedDates = task.completedDates || [];
+            return {
+              ...task,
+              completedDates: isNowCompleted
+                ? [...completedDates, dateString]
+                : completedDates.filter((d) => d !== dateString),
+            };
+          }),
+        }));
+      },
 
       addCategory: (category) => set((state) => ({ categories: [...state.categories, category] })),
       updateCategory: (id, updates) => set((state) => ({
@@ -5114,13 +5269,14 @@ import {
   ChevronLeft,
   Repeat,
   Folder,
+  Target
 } from "lucide-react";
 import type { Task, Priority, Subtask, Recurrence } from "@/types"; // <-- Updated Import
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Select } from "@/components/ui/Select";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { useTasksStore } from "../store/tasks.store";
-
+import { useGoalsStore } from "@/features/goals/store/goals.store";
 interface TaskDetailsProps {
   task: Task | null;
   isOpen: boolean;
@@ -5156,6 +5312,20 @@ export function TaskDetails({
       value: c.id,
       label: c.name,
       icon: <div className={`w-3 h-3 rounded-full ${c.color}`} />,
+    })),
+  ];
+  const goals = useGoalsStore((state) => state.goals);
+
+  const goalOptions = [
+    {
+      value: "none",
+      label: "No Goal",
+      icon: <Target className="w-4 h-4 text-text-secondary" />,
+    },
+    ...goals.map((g) => ({
+      value: g.id,
+      label: g.title,
+      icon: <Target className="w-4 h-4 text-blue-500" />,
     })),
   ];
   const recurrenceOptions = [
@@ -5407,6 +5577,43 @@ export function TaskDetails({
                 </div>
               </div>
             </div>
+            <div className="flex items-center">
+              <span className="w-24 text-sm text-text-secondary">Goal</span>
+              <div className="flex-1">
+                <Select
+                  value={currentTask.goalId || "none"}
+                  onChange={(val) => onUpdate({ ...currentTask, goalId: val })}
+                  options={goalOptions}
+                  align="right"
+                />
+              </div>
+            </div>
+
+            {/* Only displays if a Goal is actually selected */}
+            {currentTask.goalId && currentTask.goalId !== "none" && (
+              <div className="flex items-center animate-in fade-in slide-in-from-top-1">
+                <span className="w-24 text-sm text-text-secondary">
+                  Contribution
+                </span>
+                <div className="flex-1 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={currentTask.goalContribution ?? 1}
+                    onChange={(e) =>
+                      onUpdate({
+                        ...currentTask,
+                        goalContribution: Number(e.target.value),
+                      })
+                    }
+                    className="w-20 bg-background-main border border-border-subtle rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary outline-none focus:ring-2 focus:ring-accent-primary/20 transition-all"
+                  />
+                  <span className="text-xs font-medium text-text-secondary">
+                    added to progress
+                  </span>
+                </div>
+              </div>
+            )}
 
             <hr className="border-border-subtle" />
 
@@ -5821,6 +6028,1177 @@ export function TaskItem({
   );
 }
 --------
+GoalsPage.tsx
+import { useState, useMemo } from "react";
+import {
+  Menu,
+  Plus,
+  Target,
+  Search,
+  SlidersHorizontal,
+  ArrowUpDown,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
+import { useUiStore } from "@/stores/ui.store";
+import { useGoalsStore } from "./store/goals.store";
+import { GoalCard } from "./components/GoalCard";
+import { AddGoalModal } from "./components/AddGoalModal";
+import { GoalDetails } from "./components/GoalDetails";
+import { Select } from "@/components/ui/Select"; 
+
+// Types for Filters and Sort
+type FilterStatus = "all" | "active" | "achieved" | "overdue" | "abandoned";
+type FilterCategory =
+  | "all"
+  | "career"
+  | "learning"
+  | "health"
+  | "finance"
+  | "personal";
+type FilterPriority = "all" | "high" | "medium" | "low";
+type SortOption = "deadline" | "progress" | "priority" | "newest" | "oldest";
+
+export default function GoalsPage() {
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const goals = useGoalsStore((state) => state.goals);
+
+  // Modals & Sidebar State
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Search, Filter, and Sort State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("active"); // Default to active
+  const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("all");
+  const [priorityFilter, setPriorityFilter] = useState<FilterPriority>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("deadline"); // Feature 8: Default to Deadline
+
+  // Feature 9: Overview Header Calculations (Lightweight, no charts)
+  const todayStr = new Date().toISOString().split("T")[0];
+  const stats = useMemo(() => {
+    let active = 0,
+      achieved = 0,
+      overdue = 0;
+    goals.forEach((g) => {
+      if (g.status === "achieved") achieved++;
+      else if (g.status === "abandoned") return;
+      else {
+        active++;
+        if (g.deadline < todayStr) overdue++;
+      }
+    });
+    return { active, achieved, overdue };
+  }, [goals, todayStr]);
+
+  // Apply Filters & Sorting
+  const displayedGoals = useMemo(() => {
+    let result = goals;
+
+    // 1. Apply Search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (g) =>
+          g.title.toLowerCase().includes(query) ||
+          (g.description?.toLowerCase() || "").includes(query) ||
+          g.milestones.some((m) => m.title.toLowerCase().includes(query)),
+      );
+    }
+
+    // 2. Apply Filters
+    result = result.filter((g) => {
+      // Status Filter
+      if (
+        statusFilter === "active" &&
+        (g.status === "achieved" || g.status === "abandoned")
+      )
+        return false;
+      if (statusFilter === "achieved" && g.status !== "achieved") return false;
+      if (statusFilter === "abandoned" && g.status !== "abandoned")
+        return false;
+      if (
+        statusFilter === "overdue" &&
+        (g.status === "achieved" || g.deadline >= todayStr)
+      )
+        return false;
+
+      // Category Filter
+      if (categoryFilter !== "all" && g.category !== categoryFilter)
+        return false;
+
+      // Priority Filter
+      if (priorityFilter !== "all" && g.priority !== priorityFilter)
+        return false;
+
+      return true;
+    });
+
+    // 3. Apply Sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "deadline":
+          return (
+            new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+          );
+        case "progress": {
+          const aProg = a.currentValue / Math.max(1, a.targetValue);
+          const bProg = b.currentValue / Math.max(1, b.targetValue);
+          return bProg - aProg; // Descending
+        }
+        case "priority": {
+          const priorityWeight = { high: 3, medium: 2, low: 1 };
+          return (
+            (priorityWeight[b.priority || "medium"] || 0) -
+            (priorityWeight[a.priority || "medium"] || 0)
+          );
+        }
+        case "newest":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [
+    goals,
+    searchQuery,
+    statusFilter,
+    categoryFilter,
+    priorityFilter,
+    sortBy,
+    todayStr,
+  ]);
+
+  // Helper component for the Filter/Sort controls
+  const renderFilterControls = () => (
+    <>
+      <Select
+        value={statusFilter}
+        onChange={(v) => setStatusFilter(v as FilterStatus)}
+        options={[
+          { value: "all", label: "All Statuses" },
+          { value: "active", label: "Active" },
+          { value: "achieved", label: "Achieved" },
+          { value: "overdue", label: "Overdue" },
+          { value: "abandoned", label: "Abandoned" },
+        ]}
+      />
+      <Select
+        value={categoryFilter}
+        onChange={(v) => setCategoryFilter(v as FilterCategory)}
+        options={[
+          { value: "all", label: "All Categories" },
+          { value: "career", label: "Career" },
+          { value: "learning", label: "Learning" },
+          { value: "health", label: "Health" },
+          { value: "finance", label: "Finance" },
+          { value: "personal", label: "Personal" },
+        ]}
+      />
+      <Select
+        value={priorityFilter}
+        onChange={(v) => setPriorityFilter(v as FilterPriority)}
+        options={[
+          { value: "all", label: "All Priorities" },
+          { value: "high", label: "High" },
+          { value: "medium", label: "Medium" },
+          { value: "low", label: "Low" },
+        ]}
+      />
+      <div className="h-6 w-px bg-border-subtle mx-2 hidden lg:block" />
+      <div className="flex items-center gap-2">
+        <ArrowUpDown className="w-4 h-4 text-text-secondary shrink-0 hidden lg:block" />
+        <Select
+          value={sortBy}
+          onChange={(v) => setSortBy(v as SortOption)}
+          options={[
+            { value: "deadline", label: "Sort: Deadline" },
+            { value: "progress", label: "Sort: Progress" },
+            { value: "priority", label: "Sort: Priority" },
+            { value: "newest", label: "Sort: Newest" },
+            { value: "oldest", label: "Sort: Oldest" },
+          ]}
+        />
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-full w-full absolute inset-0 z-20 bg-background-main md:static md:bg-transparent overflow-hidden">
+      <div className="flex-1 flex flex-col h-full min-w-0 transition-all duration-300 relative">
+        <div className="flex flex-col h-full max-w-6xl w-full mx-auto relative px-0 md:px-8">
+          {/* Mobile Header */}
+          <div className="md:hidden flex items-center justify-between px-4 h-16 border-b border-border-subtle shrink-0 bg-background-surface z-10">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openMobileMenu}
+                className="p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <span className="text-2xl font-extrabold bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent">
+                Goals
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMobileFilterOpen(true)}
+                className="p-1.5 text-text-secondary hover:bg-background-main rounded-lg transition-colors cursor-pointer"
+              >
+                <SlidersHorizontal className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="p-1.5 text-accent-primary hover:bg-accent-subtle rounded-lg transition-colors cursor-pointer"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Header & Search */}
+          <div className="hidden md:flex pt-8 pb-4 items-center justify-between shrink-0 gap-6">
+            <h1 className="text-4xl font-extrabold tracking-tight">
+              <span className="bg-linear-to-r from-text-primary via-accent-primary to-text-primary bg-clip-text text-transparent bg-size-[200%_auto] animate-gradient">
+                Goals
+              </span>
+            </h1>
+
+            {/* Feature 6: Desktop Search Bar */}
+            <div className="flex-1 max-w-md relative">
+              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input
+                type="text"
+                placeholder="Search goals..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-background-surface border border-border-subtle rounded-xl text-sm font-medium outline-none focus:border-accent-primary/50 focus:ring-1 focus:ring-accent-primary/50 transition-all text-text-primary"
+              />
+            </div>
+
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-accent-primary text-white font-medium rounded-xl hover:opacity-90 transition-opacity cursor-pointer shadow-sm shadow-accent-primary/20 shrink-0"
+            >
+              <Plus className="w-5 h-5" /> New Goal
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 md:px-0 scrollbar-none pb-8">
+            {/* Feature 6: Mobile Search Bar */}
+            <div className="md:hidden py-3 shrink-0">
+              <div className="relative w-full">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                <input
+                  type="text"
+                  placeholder="Search goals..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-background-surface border border-border-subtle rounded-xl text-sm font-medium outline-none focus:border-accent-primary/50 transition-all text-text-primary"
+                />
+              </div>
+            </div>
+
+            {/* Feature 9: Goals Overview Header */}
+            <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mt-2">
+              <div className="bg-background-surface border border-border-subtle rounded-2xl p-4 flex flex-col justify-center">
+                <div className="flex items-center gap-2 text-text-secondary mb-1">
+                  <Target className="w-4 h-4 text-blue-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Active
+                  </span>
+                </div>
+                <span className="text-2xl md:text-3xl font-extrabold text-text-primary">
+                  {stats.active}
+                </span>
+              </div>
+              <div className="bg-background-surface border border-border-subtle rounded-2xl p-4 flex flex-col justify-center">
+                <div className="flex items-center gap-2 text-text-secondary mb-1">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Achieved
+                  </span>
+                </div>
+                <span className="text-2xl md:text-3xl font-extrabold text-text-primary">
+                  {stats.achieved}
+                </span>
+              </div>
+              <div className="bg-background-surface border border-border-subtle rounded-2xl p-4 flex flex-col justify-center">
+                <div className="flex items-center gap-2 text-text-secondary mb-1">
+                  <AlertCircle className="w-4 h-4 text-red-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    Overdue
+                  </span>
+                </div>
+                <span className="text-2xl md:text-3xl font-extrabold text-text-primary">
+                  {stats.overdue}
+                </span>
+              </div>
+            </div>
+
+            {/* Feature 7 & 8: Desktop Filter & Sort Row */}
+            <div className="hidden md:flex items-center gap-3 mb-6 bg-background-surface p-2 border border-border-subtle rounded-xl">
+              <SlidersHorizontal className="w-4 h-4 text-text-secondary ml-2 shrink-0" />
+              {renderFilterControls()}
+            </div>
+
+            {/* Goals Grid Layout */}
+            {displayedGoals.length === 0 ? (
+              <div className="mt-12 flex flex-col items-center justify-center text-text-secondary opacity-60">
+                <Target className="w-16 h-16 mb-4 stroke-[1.5]" />
+                <p className="text-lg font-medium">No goals found</p>
+                <p className="text-sm mt-2">
+                  Adjust your search or filters to see more.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {displayedGoals.map((goal) => (
+                  <GoalCard
+                    key={goal.id}
+                    goal={goal}
+                    onClick={() => setSelectedGoalId(goal.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Feature 7: Mobile Filter Drawer Overlay */}
+        {isMobileFilterOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-background-surface w-full rounded-t-3xl p-6 border-t border-border-subtle animate-in slide-in-from-bottom-10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-bold text-lg text-text-primary flex items-center gap-2">
+                  <SlidersHorizontal className="w-5 h-5" /> Filter & Sort
+                </h3>
+                <button
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="text-accent-primary font-medium"
+                >
+                  Done
+                </button>
+              </div>
+              <div className="flex flex-col gap-4">
+                {renderFilterControls()}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <GoalDetails
+        isOpen={!!selectedGoalId}
+        goalId={selectedGoalId}
+        onClose={() => setSelectedGoalId(null)}
+      />
+      <AddGoalModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+      />
+    </div>
+  );
+}
+-------
+GoalsDetails.tsx
+import { useState } from "react";
+import {
+  X,
+  Target,
+  Trash2,
+  ChevronLeft,
+  CheckCircle2,
+  Circle,
+  Plus,
+  Flag
+} from "lucide-react";
+import { format } from "date-fns";
+import { useGoalsStore } from "../store/goals.store";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { cn } from "@/lib/utils";
+import type { GoalMilestone, GoalCategory, GoalPriority } from "@/types";
+import { Select } from "@/components/ui/Select";
+
+interface GoalDetailsProps {
+  goalId: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function GoalDetails({ goalId, isOpen, onClose }: GoalDetailsProps) {
+  const goals = useGoalsStore((state) => state.goals);
+  const updateGoal = useGoalsStore((state) => state.updateGoal);
+  const updateProgress = useGoalsStore((state) => state.updateProgress);
+  const deleteGoal = useGoalsStore((state) => state.deleteGoal);
+  const toggleMilestone = useGoalsStore((state) => state.toggleMilestone);
+
+  const goal = goals.find((g) => g.id === goalId) || null;
+
+  const [prevGoalId, setPrevGoalId] = useState<string | null>(null);
+  const [progressInput, setProgressInput] = useState<number | "">("");
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Render-Phase State Reset
+  if (goalId !== prevGoalId) {
+    setPrevGoalId(goalId);
+    setProgressInput(goal ? goal.currentValue : "");
+    setNewMilestoneTitle("");
+  }
+
+  if (!isOpen || !goal) return null;
+
+  const handleUpdateProgress = () => {
+    if (progressInput !== "" && progressInput >= 0) {
+      updateProgress(goal.id, Number(progressInput));
+    }
+  };
+
+  const handleAddMilestone = () => {
+    if (!newMilestoneTitle.trim()) return;
+    const newMilestone: GoalMilestone = {
+      id: crypto.randomUUID(),
+      title: newMilestoneTitle.trim(),
+      completed: false,
+    };
+    updateGoal(goal.id, { milestones: [...goal.milestones, newMilestone] });
+    setNewMilestoneTitle("");
+  };
+
+  const removeMilestone = (milestoneId: string) => {
+    updateGoal(goal.id, {
+      milestones: goal.milestones.filter((m) => m.id !== milestoneId),
+    });
+  };
+
+  const handleDelete = () => {
+    deleteGoal(goal.id);
+    setIsDeleteModalOpen(false);
+    onClose();
+  };
+
+  return (
+    <>
+      <aside
+        className={cn(
+          "fixed inset-0 z-50 w-full bg-background-surface transform transition-all duration-300 ease-in-out flex flex-col rounded-2xl md:static md:z-auto md:h-full md:border-l border-border-subtle md:shadow-none md:transform-none",
+          isOpen
+            ? "translate-x-0 md:w-110 md:min-w-110 md:opacity-100"
+            : "translate-x-full md:w-0 md:min-w-0 md:opacity-0 md:border-none md:overflow-hidden",
+        )}
+      >
+        <div className="w-full md:w-110 h-full flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 md:p-6 border-b border-border-subtle shrink-0">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="p-2 -ml-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer md:hidden shrink-0"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <span className="font-semibold text-text-secondary text-sm">
+                Goal Details
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 -mr-2 text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer hidden md:block"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Scrollable Body */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
+            {/* Title Editor */}
+            <textarea
+              value={goal.title}
+              onChange={(e) => {
+                updateGoal(goal.id, { title: e.target.value });
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              placeholder="Goal title"
+              rows={1}
+              className="w-full bg-transparent text-2xl font-bold text-text-primary outline-none resize-none overflow-hidden"
+            />
+
+            {/* Target & Progress Visualization */}
+            <div className="bg-background-main border border-border-subtle rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+              <Target className="w-8 h-8 text-blue-500 mb-2" />
+              <span className="text-3xl font-extrabold text-text-primary mb-1">
+                {goal.currentValue}{" "}
+                <span className="text-lg text-text-secondary">
+                  / {goal.targetValue}
+                </span>
+              </span>
+              <span className="text-sm text-text-secondary font-medium uppercase tracking-wider">
+                {goal.unit}
+              </span>
+            </div>
+
+            {/* Config & Logging */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-text-secondary ml-1">
+                  Log Progress
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    value={progressInput}
+                    onChange={(e) => setProgressInput(Number(e.target.value))}
+                    className="flex-1 bg-background-main border border-border-subtle rounded-xl py-2 px-4 text-text-primary font-bold outline-none"
+                  />
+                  <button
+                    onClick={handleUpdateProgress}
+                    className="px-6 py-2 bg-accent-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
+                  >
+                    Update
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <span className="text-xs font-medium text-text-secondary ml-1">
+                    Target Value
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={goal.targetValue}
+                    onChange={(e) =>
+                      updateGoal(goal.id, {
+                        targetValue: Number(e.target.value),
+                      })
+                    }
+                    className="w-full bg-background-main border border-border-subtle rounded-xl py-2 px-4 text-sm text-text-primary font-bold outline-none"
+                  />
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <span className="text-xs font-medium text-text-secondary ml-1">
+                    Deadline
+                  </span>
+                  <DatePicker
+                    value={goal.deadline}
+                    onChange={(date) =>
+                      updateGoal(goal.id, {
+                        deadline: date || format(new Date(), "yyyy-MM-dd"),
+                      })
+                    }
+                    align="right"
+                  />
+                </div>
+                <div className="space-y-1.5 pt-2">
+                  <span className="text-xs font-medium text-text-secondary ml-1">
+                    Category
+                  </span>
+                  <Select
+                    value={goal.category || "personal"}
+                    onChange={(val) =>
+                      updateGoal(goal.id, { category: val as GoalCategory })
+                    }
+                    options={[
+                      { value: "career", label: "Career" },
+                      { value: "learning", label: "Learning" },
+                      { value: "health", label: "Health" },
+                      { value: "finance", label: "Finance" },
+                      { value: "personal", label: "Personal" },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2">
+                <span className="text-xs font-medium text-text-secondary ml-1">
+                  Priority
+                </span>
+                <Select
+                  value={goal.priority || "medium"}
+                  onChange={(val) =>
+                    updateGoal(goal.id, { priority: val as GoalPriority })
+                  }
+                  options={[
+                    {
+                      value: "high",
+                      label: "High",
+                      icon: (
+                        <Flag
+                          className="w-4 h-4 text-red-500/70"
+                          fill="currentColor"
+                        />
+                      ),
+                    },
+                    {
+                      value: "medium",
+                      label: "Medium",
+                      icon: (
+                        <Flag
+                          className="w-4 h-4 text-yellow-500/70"
+                          fill="currentColor"
+                        />
+                      ),
+                    },
+                    {
+                      value: "low",
+                      label: "Low",
+                      icon: (
+                        <Flag
+                          className="w-4 h-4 text-green-500/70"
+                          fill="currentColor"
+                        />
+                      ),
+                    },
+                  ]}
+                  align="right"
+                />
+              </div>
+            </div>
+
+            <hr className="border-border-subtle" />
+
+            {/* Milestones (Subtasks) */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-text-primary">
+                Milestones
+              </h4>
+              <div className="space-y-2">
+                {goal.milestones.map((m) => (
+                  <div key={m.id} className="flex items-center gap-2 group">
+                    <button
+                      onClick={() => toggleMilestone(goal.id, m.id)}
+                      className="p-1 -ml-1 cursor-pointer"
+                    >
+                      {m.completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-accent-primary" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-text-secondary" />
+                      )}
+                    </button>
+                    <input
+                      type="text"
+                      value={m.title}
+                      onChange={(e) => {
+                        const updated = goal.milestones.map((st) =>
+                          st.id === m.id
+                            ? { ...st, title: e.target.value }
+                            : st,
+                        );
+                        updateGoal(goal.id, { milestones: updated });
+                      }}
+                      className={cn(
+                        "flex-1 bg-transparent text-sm outline-none border-none py-1",
+                        m.completed
+                          ? "text-text-secondary line-through"
+                          : "text-text-primary",
+                      )}
+                    />
+                    <button
+                      onClick={() => removeMilestone(m.id)}
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-text-secondary hover:text-red-500 transition-opacity p-2 md:p-1 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+
+                <div className="flex items-center gap-2 opacity-60 focus-within:opacity-100 transition-opacity">
+                  <Plus className="w-5 h-5 md:w-4 md:h-4 text-text-secondary ml-1 mr-1" />
+                  <input
+                    type="text"
+                    value={newMilestoneTitle}
+                    onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddMilestone();
+                    }}
+                    onBlur={handleAddMilestone}
+                    placeholder="Add a milestone..."
+                    className="flex-1 bg-transparent text-sm outline-none border-none py-1 text-text-primary"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="p-4 border-t border-border-subtle bg-background-main/50 shrink-0">
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" /> Delete Goal
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Goal"
+        message={`Are you sure you want to permanently delete "${goal.title}"?`}
+        confirmText="Delete"
+        isDanger={true}
+      />
+    </>
+  );
+}
+----
+GoalCard.tsx
+import {
+  Target,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Flag,
+} from "lucide-react";
+import type { Goal } from "@/types";
+import { calculateGoalMetrics } from "../utils/goal.utils";
+import { cn } from "@/lib/utils";
+
+interface GoalCardProps {
+  goal: Goal;
+  onClick: () => void;
+}
+
+export function GoalCard({ goal, onClick }: GoalCardProps) {
+  const { percentage, isAchieved, daysRemaining, isOverdue, formattedDeadline } = calculateGoalMetrics(goal);
+
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case "high":
+        return (
+          <Flag className="w-3.5 h-3.5 text-red-500/60" fill="currentColor" />
+        );
+      case "low":
+        return (
+          <Flag className="w-3.5 h-3.5 text-green-500/60" fill="currentColor" />
+        );
+      case "medium":
+      default:
+        return (
+          <Flag
+            className="w-3.5 h-3.5 text-yellow-500/60"
+            fill="currentColor"
+          />
+        );
+    }
+  };
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "group flex flex-col p-5 rounded-2xl border transition-all cursor-pointer hover:shadow-md bg-background-surface",
+        isAchieved
+          ? "border-green-500/30 bg-green-500/5"
+          : "border-border-subtle hover:border-accent-primary/50",
+      )}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex flex-col min-w-0 pr-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-[10px] font-bold tracking-widest text-text-secondary bg-background-main border border-border-subtle px-1.5 py-0.5 rounded-md uppercase">
+              {goal.category || "personal"}
+            </span>
+            {/* Minimal Priority Indicator */}
+            <div
+              title={`${goal.priority || "medium"} priority`}
+              className="flex items-center"
+            >
+              {getPriorityIcon(goal.priority)}
+            </div>
+          </div>
+          <h3 className="font-bold text-lg text-text-primary truncate">
+            {goal.title}
+          </h3>
+          <div className="flex items-center gap-2 mt-1 text-xs font-medium text-text-secondary">
+            <Target className="w-3.5 h-3.5" />
+            <span>
+              {goal.currentValue} / {goal.targetValue} {goal.unit}
+            </span>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div className="shrink-0">
+          {isAchieved ? (
+            <div
+              title={`Deadline was ${formattedDeadline}`}
+              className="flex items-center gap-1 text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-md"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Achieved
+            </div>
+          ) : isOverdue ? (
+            <div
+              title={`Missed deadline: ${formattedDeadline}`}
+              className="flex items-center gap-1 text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-md"
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              Overdue
+            </div>
+          ) : (
+            <div
+              title={`Deadline: ${formattedDeadline}`}
+              className="flex items-center gap-1 text-xs font-bold text-text-secondary bg-background-main border border-border-subtle px-2 py-1 rounded-md"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              {daysRemaining === 0 ? "Due Today" : `${daysRemaining}d left`}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full h-2.5 bg-background-main rounded-full overflow-hidden mb-2 relative">
+        <div
+          className={cn(
+            "h-full transition-all duration-500 ease-out absolute left-0 top-0",
+            isAchieved
+              ? "bg-green-500"
+              : isOverdue
+                ? "bg-red-500"
+                : "bg-accent-primary",
+          )}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+
+      {/* Milestones Preview (if any) */}
+      {goal.milestones && goal.milestones.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border-subtle flex justify-between items-center text-xs text-text-secondary font-medium">
+          <span>Milestones</span>
+          <span>
+            {goal.milestones.filter((m) => m.completed).length} /{" "}
+            {goal.milestones.length}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+------
+AddGoalModal.tsx
+import { useState } from "react";
+import { X } from "lucide-react";
+import { format } from "date-fns";
+import { useGoalsStore } from "../store/goals.store";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { Select } from "@/components/ui/Select"; 
+import type { GoalCategory } from "@/types";    
+
+interface AddGoalModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function AddGoalModal({ isOpen, onClose }: AddGoalModalProps) {
+  const addGoal = useGoalsStore((state) => state.addGoal);
+
+  const [title, setTitle] = useState("");
+  const [targetValue, setTargetValue] = useState<number | "">("");
+  const [unit, setUnit] = useState("");
+  const [deadline, setDeadline] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [category, setCategory] = useState<GoalCategory>("personal");
+
+  if (!isOpen) return null;
+  const categoryOptions = [
+    { value: "career", label: "Career" },
+    { value: "learning", label: "Learning" },
+    { value: "health", label: "Health" },
+    { value: "finance", label: "Finance" },
+    { value: "personal", label: "Personal" },
+  ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !targetValue || !unit.trim()) return;
+
+    addGoal({
+      id: crypto.randomUUID(),
+      title: title.trim(),
+      targetValue: Number(targetValue),
+      currentValue: 0,
+      unit: unit.trim(),
+      deadline,
+      milestones: [],
+      status: "not_started",
+      category,
+      priority: "medium", // NEW: Default Priority
+      progressHistory: [],
+      createdAt: new Date().toISOString(),
+    });
+
+    // Reset and close
+    setTitle("");
+    setTargetValue("");
+    setUnit("");
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-md bg-background-surface border border-border-subtle rounded-3xl shadow-2xl p-6 md:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-text-primary">New Goal</h2>
+          <button
+            onClick={onClose}
+            className="p-2 -mr-2 text-text-secondary hover:bg-background-main rounded-xl transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-text-secondary ml-1 mb-1 block">
+              Goal Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Read 20 Books"
+              className="w-full bg-background-main border border-border-subtle rounded-xl py-3 px-4 text-text-primary font-medium focus:ring-2 focus:ring-accent-primary/50 outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-text-secondary ml-1 mb-1 block">
+                Target Number
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={targetValue}
+                onChange={(e) => setTargetValue(Number(e.target.value))}
+                placeholder="e.g., 20"
+                className="w-full bg-background-main border border-border-subtle rounded-xl py-3 px-4 text-text-primary font-medium outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-text-secondary ml-1 mb-1 block">
+                Unit
+              </label>
+              <input
+                type="text"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="e.g., Books, USD, kg"
+                className="w-full bg-background-main border border-border-subtle rounded-xl py-3 px-4 text-text-primary font-medium outline-none"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5 z-30">
+            <label className="text-xs font-medium text-text-secondary ml-1 block">
+              Category
+            </label>
+            <Select
+              value={category}
+              onChange={(val) => setCategory(val as GoalCategory)}
+              options={categoryOptions}
+            />
+          </div>
+
+          <div className="space-y-1.5 z-20">
+            <label className="text-xs font-medium text-text-secondary ml-1 block">
+              Target Deadline
+            </label>
+            <DatePicker
+              value={deadline}
+              onChange={(d) =>
+                setDeadline(d || format(new Date(), "yyyy-MM-dd"))
+              }
+              className="w-full"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={!title.trim() || !targetValue || !unit.trim()}
+            className="w-full py-3.5 mt-4 bg-accent-primary text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-opacity"
+          >
+            Create Goal
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+-----
+goals.store.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Goal, GoalStatus } from "@/types";
+
+interface GoalsState {
+  goals: Goal[];
+  addGoal: (goal: Goal) => void;
+  updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
+  updateProgress: (id: string, currentValue: number, source?: "manual" | "task" | "habit", sourceId?: string) => void;
+  toggleMilestone: (goalId: string, milestoneId: string) => void;
+  updateStatus: (id: string, status: GoalStatus) => void;
+}
+
+export const useGoalsStore = create<GoalsState>()(
+  persist(
+    (set) => ({
+      goals: [],
+      
+      addGoal: (goal) => 
+        set((state) => ({ goals: [goal, ...state.goals] })),
+      
+      updateGoal: (id, updates) => 
+        set((state) => ({
+          goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+        })),
+      
+      deleteGoal: (id) => 
+        set((state) => ({
+          goals: state.goals.filter((g) => g.id !== id),
+        })),
+        
+      updateProgress: (id, currentValue, source = "manual", sourceId) =>
+        set((state) => ({
+          goals: state.goals.map((g) => {
+            if (g.id !== id) return g;
+            
+            const delta = currentValue - g.currentValue;
+            
+            const newHistory = delta !== 0 ? [
+              ...(g.progressHistory || []), 
+              {
+                value: delta,
+                source,
+                sourceId,
+                timestamp: new Date().toISOString()
+              }
+            ] : (g.progressHistory || []);
+
+            let newStatus = g.status;
+            if (currentValue >= g.targetValue) {
+              newStatus = "achieved";
+            } else if (currentValue > 0 && g.status === "not_started") {
+              newStatus = "in_progress";
+            } else if (currentValue < g.targetValue && g.status === "achieved") {
+              newStatus = "in_progress"; 
+            }
+
+            return { 
+              ...g, 
+              currentValue, 
+              status: newStatus, 
+              progressHistory: newHistory 
+            };
+          }),
+        })),
+        
+      toggleMilestone: (goalId, milestoneId) =>
+        set((state) => ({
+          goals: state.goals.map((g) => {
+            if (g.id !== goalId) return g;
+            
+            const updatedMilestones = g.milestones.map((m) =>
+              m.id === milestoneId ? { ...m, completed: !m.completed } : m
+            );
+            
+            return { ...g, milestones: updatedMilestones };
+          }),
+        })),
+        
+      updateStatus: (id, status) =>
+        set((state) => ({
+          goals: state.goals.map((g) => (g.id === id ? { ...g, status } : g)),
+        })),
+    }),
+    { name: "life-tracker-goals" }
+  )
+);
+---
+goal.utils.ts
+import { differenceInDays, parseISO, startOfDay, format } from "date-fns";
+import type { Goal } from "@/types";
+
+export const calculateGoalMetrics = (goal: Goal) => {
+  const progress = Math.max(0, goal.currentValue);
+  const target = Math.max(0.01, goal.targetValue); // Prevent division by zero
+  
+  // Cap percentage at 100% for the visual progress bar
+  const rawPercentage = (progress / target) * 100;
+  const percentage = Math.min(Math.max(rawPercentage, 0), 100);
+  
+  const isAchieved = progress >= target;
+
+  // Deadline calculations
+  const today = startOfDay(new Date());
+  const deadlineDate = startOfDay(parseISO(goal.deadline));
+  const daysRemaining = differenceInDays(deadlineDate, today);
+  
+  const isOverdue = daysRemaining < 0 && !isAchieved;
+
+  return {
+    percentage,
+    isAchieved,
+    daysRemaining,
+    isOverdue,
+    formattedDeadline: format(deadlineDate, "MMM d, yyyy")
+  };
+};
+----
+goal.types.ts
+export type GoalStatus = "not_started" | "in_progress" | "achieved" | "abandoned";
+
+export type GoalCategory = "career" | "learning" | "health" | "finance" | "personal";
+
+export type GoalPriority = "low" | "medium" | "high"; 
+
+export interface GoalProgressEntry {
+  value: number; 
+  source: "manual" | "task" | "habit";
+  sourceId?: string;
+  timestamp: string;
+}
+
+export interface GoalMilestone {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface Goal {
+  id: string;
+  title: string;
+  description?: string;
+  targetValue: number;
+  currentValue: number;
+  unit: string;
+  deadline: string; 
+  milestones: GoalMilestone[];
+  status: GoalStatus;
+  category: GoalCategory;             
+  priority: GoalPriority;
+  progressHistory: GoalProgressEntry[]; 
+  createdAt: string;
+  deletedAt?: string;
+}
+-----
 BudgetPage.tsx
 export default function BudgetPage() {
   return (
@@ -5937,7 +7315,6 @@ export interface HabitTrackingPeriod {
   start: string;
   end?: string;
 }
-
 export interface Habit {
   id: string;
   title: string;
@@ -5949,14 +7326,17 @@ export interface Habit {
   deletedAt?: string;
   color?: string; 
   status?: "active" | "stopped"; 
-  pastCycles?: HabitCycleRecord[]; 
+  pastCycles?: HabitCycleRecord[];
   trackingPeriods?: HabitTrackingPeriod[]; 
+  linkedGoalId?: string;       
+  goalContribution?: number;   
 }
 -------
 index.ts
 export * from './task.types';
 export * from './note.types'; 
 export * from './habit.types';
+export * from './goal.types';
 ----------
 note.types.ts
 export type NoteColor = "default" | "red" | "blue" | "green" | "yellow" | "purple";
@@ -6001,7 +7381,9 @@ export interface Task {
   categoryId?: string;
   recurrence?: Recurrence;
   completedDates?: string[]; 
-  type?: TaskType; 
+  type?: TaskType;
+  goalId?: string;           
+  goalContribution?: number; 
 }
 ------
 date.utils.ts

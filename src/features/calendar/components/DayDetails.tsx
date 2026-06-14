@@ -38,15 +38,12 @@ export function DayDetails({
   onClose,
   initialExpandedTaskId,
 }: DayDetailsProps) {
-  // Added bulkUpdateTasks from the store
-  const {
-    tasks,
-    categories,
-    addTask,
-    updateTask,
-    deleteTask,
-    bulkUpdateTasks,
-  } = useTasksStore();
+  const tasks = useTasksStore((state) => state.tasks);
+  const categories = useTasksStore((state) => state.categories);
+  const addTask = useTasksStore((state) => state.addTask);
+  const updateTask = useTasksStore((state) => state.updateTask);
+  const deleteTask = useTasksStore((state) => state.deleteTask);
+  const bulkUpdateTasks = useTasksStore((state) => state.bulkUpdateTasks);
 
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");

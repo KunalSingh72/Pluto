@@ -26,5 +26,7 @@ export interface Task {
   categoryId?: string;
   recurrence?: Recurrence;
   completedDates?: string[]; 
-  type?: TaskType; 
+  type?: TaskType;
+  goalId?: string;           
+  goalContribution?: number; 
 }

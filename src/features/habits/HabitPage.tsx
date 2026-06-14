@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 type HabitView = "daily" | "all";
 
 export default function HabitPage() {
-  const { openMobileMenu } = useUiStore();
-  const { habits, bulkDeleteHabits } = useHabitsStore();
-
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const habits = useHabitsStore((state) => state.habits);
+  const bulkDeleteHabits = useHabitsStore((state) => state.bulkDeleteHabits);
   const [activeView, setActiveView] = useState<HabitView>("daily");
   const [selectedDate, setSelectedDate] = useState<Date>(
     startOfDay(new Date()),

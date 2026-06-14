@@ -5,15 +5,16 @@ import { NAVIGATION_LINKS } from "@/config/navigation";
 import { useUiStore } from "@/stores/ui.store";
 
 export default function MobileHeader() {
-  const { theme, toggleTheme } = useTheme();
-  const { isMobileMenuOpen, openMobileMenu, closeMobileMenu } = useUiStore();
-  const location = useLocation();
+  const { theme, toggleTheme } = useTheme();const isMobileMenuOpen = useUiStore((state) => state.isMobileMenuOpen);
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const closeMobileMenu = useUiStore((state) => state.closeMobileMenu);  const location = useLocation();
 
   const isFullScreenPage = [
     "/tasks",
     "/notes",
     "/calendar",
     "/habits",
+    "/goals",
   ].includes(location.pathname);
 
   return (

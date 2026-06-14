@@ -27,7 +27,6 @@ export interface HabitTrackingPeriod {
   start: string;
   end?: string;
 }
-
 export interface Habit {
   id: string;
   title: string;
@@ -39,6 +38,8 @@ export interface Habit {
   deletedAt?: string;
   color?: string; 
   status?: "active" | "stopped"; 
-  pastCycles?: HabitCycleRecord[]; 
+  pastCycles?: HabitCycleRecord[];
   trackingPeriods?: HabitTrackingPeriod[]; 
+  linkedGoalId?: string;       
+  goalContribution?: number;   
 }

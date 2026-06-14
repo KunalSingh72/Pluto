@@ -10,8 +10,11 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 type NotesView = "active" | "trash";
 
 export default function NotesPage() {
-  const { openMobileMenu } = useUiStore();
-  const { notes, addNote, cleanOldTrash, softDeleteMultiple } = useNotesStore();
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const notes = useNotesStore((state) => state.notes);
+  const addNote = useNotesStore((state) => state.addNote);
+  const cleanOldTrash = useNotesStore((state) => state.cleanOldTrash);
+  const softDeleteMultiple = useNotesStore((state) => state.softDeleteMultiple);
 
   const [activeView, setActiveView] = useState<NotesView>("active");
   const [prevActiveView, setPrevActiveView] = useState<NotesView>("active");

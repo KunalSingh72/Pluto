@@ -21,8 +21,9 @@ import {
 import { DayDetails } from "./components/DayDetails";
 
 export default function CalendarPage() {
-  const { openMobileMenu } = useUiStore();
-  const { tasks, categories } = useTasksStore();
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const tasks = useTasksStore((state) => state.tasks);
+  const categories = useTasksStore((state) => state.categories);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
 

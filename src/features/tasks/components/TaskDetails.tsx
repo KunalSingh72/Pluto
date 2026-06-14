@@ -10,13 +10,14 @@ import {
   ChevronLeft,
   Repeat,
   Folder,
+  Target
 } from "lucide-react";
 import type { Task, Priority, Subtask, Recurrence } from "@/types"; // <-- Updated Import
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Select } from "@/components/ui/Select";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { useTasksStore } from "../store/tasks.store";
-
+import { useGoalsStore } from "@/features/goals/store/goals.store";
 interface TaskDetailsProps {
   task: Task | null;
   isOpen: boolean;
@@ -52,6 +53,20 @@ export function TaskDetails({
       value: c.id,
       label: c.name,
       icon: <div className={`w-3 h-3 rounded-full ${c.color}`} />,
+    })),
+  ];
+  const goals = useGoalsStore((state) => state.goals);
+
+  const goalOptions = [
+    {
+      value: "none",
+      label: "No Goal",
+      icon: <Target className="w-4 h-4 text-text-secondary" />,
+    },
+    ...goals.map((g) => ({
+      value: g.id,
+      label: g.title,
+      icon: <Target className="w-4 h-4 text-blue-500" />,
     })),
   ];
   const recurrenceOptions = [
@@ -303,6 +318,43 @@ export function TaskDetails({
                 </div>
               </div>
             </div>
+            <div className="flex items-center">
+              <span className="w-24 text-sm text-text-secondary">Goal</span>
+              <div className="flex-1">
+                <Select
+                  value={currentTask.goalId || "none"}
+                  onChange={(val) => onUpdate({ ...currentTask, goalId: val })}
+                  options={goalOptions}
+                  align="right"
+                />
+              </div>
+            </div>
+
+            {/* Only displays if a Goal is actually selected */}
+            {currentTask.goalId && currentTask.goalId !== "none" && (
+              <div className="flex items-center animate-in fade-in slide-in-from-top-1">
+                <span className="w-24 text-sm text-text-secondary">
+                  Contribution
+                </span>
+                <div className="flex-1 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    value={currentTask.goalContribution ?? 1}
+                    onChange={(e) =>
+                      onUpdate({
+                        ...currentTask,
+                        goalContribution: Number(e.target.value),
+                      })
+                    }
+                    className="w-20 bg-background-main border border-border-subtle rounded-lg px-3 py-1.5 text-sm font-bold text-text-primary outline-none focus:ring-2 focus:ring-accent-primary/20 transition-all"
+                  />
+                  <span className="text-xs font-medium text-text-secondary">
+                    added to progress
+                  </span>
+                </div>
+              </div>
+            )}
 
             <hr className="border-border-subtle" />
 

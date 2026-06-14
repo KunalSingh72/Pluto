@@ -66,16 +66,16 @@ const getMobileMenuOptions = (counts: {
 ];
 
 export default function TasksPage() {
-  const { openMobileMenu } = useUiStore();
-  const {
-    tasks,
-    addTask,
-    updateTask,
-    deleteTask,
-    bulkUpdateTasks,
-    bulkDeleteTasks,
-    toggleTaskCompletionOnDate,
-  } = useTasksStore();
+  const openMobileMenu = useUiStore((state) => state.openMobileMenu);
+  const tasks = useTasksStore((state) => state.tasks);
+  const addTask = useTasksStore((state) => state.addTask);
+  const updateTask = useTasksStore((state) => state.updateTask);
+  const deleteTask = useTasksStore((state) => state.deleteTask);
+  const bulkUpdateTasks = useTasksStore((state) => state.bulkUpdateTasks);
+  const bulkDeleteTasks = useTasksStore((state) => state.bulkDeleteTasks);
+  const toggleTaskCompletionOnDate = useTasksStore(
+    (state) => state.toggleTaskCompletionOnDate,
+  );
 
   const [activeView, setActiveView] = useState<TaskView>("today");
   const [newTaskTitle, setNewTaskTitle] = useState("");
