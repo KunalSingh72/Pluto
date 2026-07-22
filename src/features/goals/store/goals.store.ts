@@ -50,6 +50,8 @@ export const useGoalsStore = create<GoalsState>()(
             let newStatus = g.status;
             if (currentValue >= g.targetValue) {
               newStatus = "achieved";
+            } else if (currentValue <= 0) {
+              newStatus = "not_started";
             } else if (currentValue > 0 && g.status === "not_started") {
               newStatus = "in_progress";
             } else if (currentValue < g.targetValue && g.status === "achieved") {

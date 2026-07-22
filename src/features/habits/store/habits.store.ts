@@ -22,17 +22,75 @@ export const useHabitsStore = create<HabitsState>()(
         habits: [habit, ...state.habits] 
       })),
       
-      updateHabit: (id, updates) => set((state) => ({
-        habits: state.habits.map((h) => (h.id === id ? { ...h, ...updates } : h))
-      })),
-      
-      deleteHabit: (id) => set((state) => ({
-        habits: state.habits.filter((h) => h.id !== id)
-      })),
+      updateHabit: (id, updates) => {
+        const state = get();
+        const h = state.habits.find(x => x.id === id);
+        if (h) {
+            const goalsStore = useGoalsStore.getState();
+            const oldGoalId = h.linkedGoalId;
+            const oldContribution = h.goalContribution || 1;
+            const newGoalId = updates.linkedGoalId !== undefined ? updates.linkedGoalId : h.linkedGoalId;
+            const newContribution = updates.goalContribution !== undefined ? updates.goalContribution : (h.goalContribution || 1);
 
-      bulkDeleteHabits: (ids) => set((state) => ({
-        habits: state.habits.filter((h) => !ids.includes(h.id))
-      })),
+            const numCompleted = h.completedDates.length;
+
+            if (numCompleted > 0) {
+                if (oldGoalId === newGoalId && oldGoalId && oldGoalId !== "none") {
+                    const delta = (newContribution * numCompleted) - (oldContribution * numCompleted);
+                    if (delta !== 0) {
+                        const goal = goalsStore.goals.find(g => g.id === oldGoalId);
+                        if (goal) {
+                            goalsStore.updateProgress(goal.id, goal.currentValue + delta, "habit", id);
+                        }
+                    }
+                } else {
+                    if (oldGoalId && oldGoalId !== "none") {
+                        const oldGoal = goalsStore.goals.find(g => g.id === oldGoalId);
+                        if (oldGoal) {
+                            goalsStore.updateProgress(oldGoal.id, oldGoal.currentValue - (oldContribution * numCompleted), "habit", id);
+                        }
+                    }
+
+                    if (newGoalId && newGoalId !== "none") {
+                        const freshGoalsStore = useGoalsStore.getState();
+                        const newGoal = freshGoalsStore.goals.find(g => g.id === newGoalId);
+                        if (newGoal) {
+                            freshGoalsStore.updateProgress(newGoal.id, newGoal.currentValue + (newContribution * numCompleted), "habit", id);
+                        }
+                    }
+                }
+            }
+        }
+        set((state) => ({
+            habits: state.habits.map((habit) => (habit.id === id ? { ...habit, ...updates } : habit))
+        }));
+      },
+      
+      deleteHabit: (id) => {
+        const state = get();
+        const h = state.habits.find(x => x.id === id);
+        if (h && h.linkedGoalId && h.linkedGoalId !== "none") {
+            const goalsStore = useGoalsStore.getState();
+            const goal = goalsStore.goals.find(g => g.id === h.linkedGoalId);
+            if (goal) {
+                const contribution = h.goalContribution || 1;
+                const numCompleted = h.completedDates.length;
+                if (numCompleted > 0) {
+                    goalsStore.updateProgress(goal.id, goal.currentValue - (contribution * numCompleted), "habit", id);
+                }
+            }
+        }
+        set((state) => ({
+            habits: state.habits.filter((h) => h.id !== id)
+        }));
+      },
+
+      bulkDeleteHabits: (ids) => {
+        const state = get();
+        ids.forEach(id => {
+            state.deleteHabit(id);
+        });
+      },
       
       toggleHabitCompletionOnDate: (id, date) => {
         const state = get();
