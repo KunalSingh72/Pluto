@@ -1,0 +1,2055 @@
+app/page.tsx
+import { redirect } from "next/navigation";
+
+export default function Home() {
+  redirect("/dashboard");
+}
+---
+app/global.css
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6%;
+    --card-border: 240 6% 15%;
+    --sidebar-bg: 240 8% 5%;
+    --accent-purple: 270 70% 50%;
+    --accent-purple-muted: 270 60% 18%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-background text-foreground;
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Pluto Dotted Matrix Canvas Background */
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+  --chart-1: oklch(0.871 0.006 286.286);
+  --chart-2: oklch(0.552 0.016 285.938);
+  --chart-3: oklch(0.442 0.017 285.786);
+  --chart-4: oklch(0.37 0.013 285.805);
+  --chart-5: oklch(0.274 0.006 286.033);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.21 0.006 285.885);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.705 0.015 286.067);
+}
+
+.dark {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --chart-1: oklch(0.871 0.006 286.286);
+  --chart-2: oklch(0.552 0.016 285.938);
+  --chart-3: oklch(0.442 0.017 285.786);
+  --chart-4: oklch(0.37 0.013 285.805);
+  --chart-5: oklch(0.274 0.006 286.033);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.552 0.016 285.938);
+}
+----
+app/layout.tsx 
+import type { Metadata } from "next";
+import "./globals.css";
+import AppLayout from "@/components/layout/AppLayout";
+
+export const metadata: Metadata = {
+  title: "Pluto | Workspace",
+  description: "Your all-in-one productivity platform",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className="dark">
+      <body className="antialiased bg-[#09090b] text-zinc-100">
+        <AppLayout>{children}</AppLayout>
+      </body>
+    </html>
+  );
+}
+---------
+components/layout/AppLayout.tsx
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { navItems, bottomNavItem } from "@/config/navigation";
+import { Menu, Sparkles } from "lucide-react";
+import { useUIStore } from "@/store/useUIStore";
+import { useEffect, useState } from "react";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by pushing the state update to the next tick
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100">
+      <aside
+        className={`${
+          sidebarCollapsed ? "w-20" : "w-64"
+        } transition-all duration-300 flex flex-col border-r border-zinc-800/80 bg-[#101012] p-4 justify-between select-none z-50`}
+      >
+        <div>
+          <div className="flex items-center justify-between mb-8 px-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-900/30">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              {!sidebarCollapsed && (
+                <span className="text-xl font-bold tracking-tight text-white whitespace-nowrap overflow-hidden">
+                  Pluto
+                </span>
+              )}
+            </div>
+            <button
+              onClick={toggleSidebar}
+              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/50 transition-colors"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+
+          <nav className="space-y-1.5">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname.startsWith(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all overflow-hidden whitespace-nowrap ${
+                    isActive
+                      ? "bg-purple-950/60 text-purple-200 border border-purple-800/40 shadow-inner"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
+                  }`}
+                  title={sidebarCollapsed ? item.name : undefined}
+                >
+                  <Icon
+                    className={`h-4 w-4 shrink-0 ${isActive ? "text-purple-400" : "text-zinc-400"}`}
+                  />
+                  {!sidebarCollapsed && <span>{item.name}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="pt-4 border-t border-zinc-800/60">
+          <Link
+            href={bottomNavItem.href}
+            className={`flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all overflow-hidden whitespace-nowrap ${
+              pathname.startsWith(bottomNavItem.href)
+                ? "bg-purple-950/60 text-purple-200 border border-purple-800/40"
+                : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40"
+            }`}
+            title={sidebarCollapsed ? bottomNavItem.name : undefined}
+          >
+            <bottomNavItem.icon className="h-4 w-4 shrink-0 text-zinc-400" />
+            {!sidebarCollapsed && <span>{bottomNavItem.name}</span>}
+          </Link>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-dot-grid relative">
+        <header className="h-14 shrink-0 border-b border-zinc-800/60 flex items-center px-6 bg-[#09090b]/80 backdrop-blur-md z-40">
+          <h1 className="text-sm font-medium text-zinc-300 capitalize">
+            {pathname.split("/")[1] || "Dashboard"}
+          </h1>
+        </header>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </main>
+    </div>
+  );
+}
+-------------
+components/ui/button.tsx
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        outline:
+          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+        ghost:
+          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        destructive:
+          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default:
+          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        icon: "size-8",
+        "icon-xs":
+          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm":
+          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-lg": "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }) {
+  const Comp = asChild ? Slot.Root : "button"
+
+  return (
+    <Comp
+      data-slot="button"
+      data-variant={variant}
+      data-size={size}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  )
+}
+
+export { Button, buttonVariants }
+-------
+config/navigation.ts
+import { 
+  LayoutGrid, 
+  Calendar, 
+  CheckSquare, 
+  Flame, 
+  FileText, 
+  Target, 
+  Wallet, 
+  Activity, 
+  Settings 
+} from "lucide-react";
+
+export const navItems = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+  { name: "Calendar", href: "/calendar", icon: Calendar },
+  { name: "Tasks", href: "/tasks", icon: CheckSquare },
+  { name: "Habits", href: "/habits", icon: Flame },
+  { name: "Notes", href: "/notes", icon: FileText },
+  { name: "Goals", href: "/goals", icon: Target },
+  { name: "Budget", href: "/budget", icon: Wallet },
+  { name: "Health", href: "/health", icon: Activity },
+];
+
+export const bottomNavItem = { name: "Settings", href: "/settings", icon: Settings };
+--------
+lib/utils.ts 
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+----------
+store/useUIStore.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+interface UIState {
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+}
+
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      sidebarCollapsed: false,
+      toggleSidebar: () =>
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+    }),
+    {
+      name: "pluto-ui-storage", // Key used in localStorage
+    }
+  )
+);
+--------
+components.json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "radix-nova",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/app/globals.css",
+    "baseColor": "zinc",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}
+----------
+eslint.config.mjs
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+--------
+next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+-------
+package.json
+{
+  "name": "pluto",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.26.0",
+    "next": "16.2.11",
+    "radix-ui": "^1.6.5",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "shadcn": "^4.14.1",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.11",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.12",
+    "sharp": "^0.35.0"
+  }
+}
+---------
+postcss.config.mjs
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+----
+tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+--------
+app/tasks/page.tsx
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import {
+  Plus,
+  CheckCheck,
+  Trash2,
+  Flag,
+  Copy,
+  Calendar,
+  AlertCircle,
+  ListTodo,
+  Inbox,
+  X,
+  Trash,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useTaskStore, Task, Priority } from "@/store/useTaskStore";
+
+type Tab = "today" | "overdue" | "trash";
+
+const formatTaskDate = (dateStr: string) => {
+  const today = new Date().toISOString().split("T")[0];
+  if (dateStr === today) return "Today";
+
+  const date = new Date(dateStr);
+  const todayDate = new Date(today);
+  const diffTime = todayDate.getTime() - date.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return "Yesterday";
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+};
+
+export default function TasksPage() {
+  const {
+    tasks,
+    addTask,
+    updateTask,
+    duplicateTask,
+    moveToTrash,
+    restoreFromTrash,
+    permanentlyDelete,
+    emptyTrash,
+    addSubtask,
+    updateSubtask,
+    deleteSubtask,
+    processDayEnd,
+  } = useTaskStore();
+
+  const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("today");
+  const [inputValue, setInputValue] = useState("");
+
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+
+  const activeTask = tasks.find((t) => t.id === selectedTaskId);
+  const todayString = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    processDayEnd();
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, [processDayEnd]);
+
+  // Derived filtered tasks for active view
+  const filteredTasks = useMemo(() => {
+    if (activeTab === "trash") return tasks.filter((t) => t.isDeleted);
+
+    return tasks.filter((t) => {
+      if (t.isDeleted) return false;
+      if (activeTab === "today") return t.date === todayString;
+      if (activeTab === "overdue")
+        return t.date !== todayString && !t.completed;
+      return false;
+    });
+  }, [tasks, activeTab, todayString]);
+
+  // Group Overdue tasks by date
+  const groupedOverdueTasks = useMemo(() => {
+    if (activeTab !== "overdue") return {};
+    return filteredTasks.reduce(
+      (acc, task) => {
+        const dateLabel = formatTaskDate(task.date);
+        if (!acc[dateLabel]) acc[dateLabel] = [];
+        acc[dateLabel].push(task);
+        return acc;
+      },
+      {} as Record<string, Task[]>,
+    );
+  }, [filteredTasks, activeTab]);
+
+  // Pending Counts for Sidebar
+  const todayPendingCount = useMemo(
+    () =>
+      tasks.filter(
+        (t) => !t.isDeleted && !t.completed && t.date === todayString,
+      ).length,
+    [tasks, todayString],
+  );
+
+  const overduePendingCount = useMemo(
+    () =>
+      tasks.filter(
+        (t) => !t.isDeleted && !t.completed && t.date !== todayString,
+      ).length,
+    [tasks, todayString],
+  );
+
+  const handleAddTask = () => {
+    if (!inputValue.trim()) return;
+    addTask(inputValue.trim());
+    setInputValue("");
+  };
+
+  const getPriorityColor = (priority: Priority) => {
+    switch (priority) {
+      case "high":
+        return "text-red-500";
+      case "medium":
+        return "text-yellow-500";
+      case "low":
+        return "text-green-500";
+      default:
+        return "text-zinc-600";
+    }
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="flex h-full max-w-6xl mx-auto gap-8">
+      {/* Inner Sidebar Navigation */}
+      <div className="w-48 shrink-0 flex flex-col gap-2 pt-2">
+        <div className="flex items-center gap-2 px-3 pb-6 mb-2 border-b border-zinc-800/60">
+          <div className="bg-purple-600/20 p-2 rounded-lg">
+            <ListTodo className="h-5 w-5 text-purple-400" />
+          </div>
+          <span className="font-semibold text-zinc-100">TODO List</span>
+        </div>
+
+        <button
+          onClick={() => setActiveTab("today")}
+          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            activeTab === "today"
+              ? "bg-zinc-800/80 text-zinc-100"
+              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Calendar className="h-4 w-4" /> Today
+          </div>
+          {todayPendingCount > 0 && (
+            <span className="bg-zinc-800 text-zinc-300 text-[11px] py-0.5 px-2 rounded-full font-semibold">
+              {todayPendingCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("overdue")}
+          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            activeTab === "overdue"
+              ? overduePendingCount > 0
+                ? "bg-red-950/40 text-red-400"
+                : "bg-zinc-800/80 text-zinc-100"
+              : overduePendingCount > 0
+                ? "text-red-400 hover:bg-red-950/20"
+                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-4 w-4" /> Overdue
+          </div>
+          {overduePendingCount > 0 && (
+            <span
+              className={`text-[11px] py-0.5 px-2 rounded-full font-semibold ${
+                activeTab === "overdue"
+                  ? "bg-red-900/50 text-red-200"
+                  : "bg-red-950/50 text-red-400"
+              }`}
+            >
+              {overduePendingCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("trash")}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            activeTab === "trash"
+              ? "bg-zinc-800/80 text-zinc-100"
+              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+          }`}
+        >
+          <Trash2 className="h-4 w-4" /> Trash Bin
+        </button>
+      </div>
+
+      {/* Main Task Area */}
+      <div className="flex-1 flex flex-col pt-2">
+        {/* Input Bar (Only show on Today tab) */}
+        {activeTab === "today" && (
+          <div className="mb-4">
+            <div className="flex gap-3 items-center w-full max-w-2xl">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+                placeholder="What needs to be done today?"
+                className="h-12 bg-zinc-900 border-zinc-800 text-base focus-visible:ring-purple-600/50"
+              />
+              <Button
+                onClick={handleAddTask}
+                className="h-12 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-900/20"
+              >
+                <Plus className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Actions for Active Tasks (Spaced to corners of max-w-2xl) */}
+        {activeTab !== "trash" && filteredTasks.length > 0 && (
+          <div className="flex justify-between items-center w-full max-w-2xl mb-4 px-1">
+            <button
+              onClick={() =>
+                filteredTasks
+                  .filter((t) => !t.completed)
+                  .forEach((t) => updateTask(t.id, { completed: true }))
+              }
+              className="text-xs flex items-center gap-1.5 text-zinc-500 hover:text-purple-400 transition-colors"
+            >
+              <CheckCheck className="h-3.5 w-3.5" /> Mark all done
+            </button>
+            <ConfirmDialog
+              title="Delete all active tasks?"
+              description="Are you sure you want to move all tasks in this view to the trash bin?"
+              onConfirm={() => filteredTasks.forEach((t) => moveToTrash(t.id))}
+            >
+              <button className="text-xs flex items-center gap-1.5 text-zinc-500 hover:text-red-400 transition-colors">
+                <Trash2 className="h-3.5 w-3.5" /> Delete all
+              </button>
+            </ConfirmDialog>
+          </div>
+        )}
+
+        {/* Trash Actions */}
+        {activeTab === "trash" && filteredTasks.length > 0 && (
+          <div className="mb-6 w-full max-w-2xl flex justify-end">
+            <ConfirmDialog
+              title="Empty Trash Bin?"
+              description="This will permanently delete all tasks in the trash. This action cannot be undone."
+              onConfirm={emptyTrash}
+            >
+              <Button
+                variant="destructive"
+                className="h-9 rounded-xl shadow-lg shadow-red-900/20"
+              >
+                Empty Trash
+              </Button>
+            </ConfirmDialog>
+          </div>
+        )}
+
+        {/* Task List Rendering (Aligned to max-w-2xl) */}
+        <div className="flex-1 overflow-y-auto pb-20 pr-4 flex flex-col gap-2 w-full max-w-2xl">
+          {filteredTasks.length === 0 ? (
+            <div className="text-center py-16 text-zinc-500 text-sm flex flex-col items-center gap-3">
+              <Inbox className="h-10 w-10 text-zinc-700" />
+              No tasks found in {activeTab}.
+            </div>
+          ) : activeTab === "overdue" ? (
+            Object.entries(groupedOverdueTasks).map(
+              ([dateLabel, dateTasks]) => (
+                <div key={dateLabel} className="mb-6">
+                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 ml-1 border-b border-zinc-800/50 pb-2">
+                    {dateLabel}
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {dateTasks.map((task) => (
+                      <TaskRow key={task.id} task={task} />
+                    ))}
+                  </div>
+                </div>
+              ),
+            )
+          ) : (
+            filteredTasks.map((task) => <TaskRow key={task.id} task={task} />)
+          )}
+        </div>
+      </div>
+
+      {/* Slide-out Sheet for Editing */}
+      <Sheet
+        open={!!selectedTaskId}
+        onOpenChange={(open) => !open && setSelectedTaskId(null)}
+      >
+        <SheetContent className="w-full sm:max-w-md bg-[#09090b] border-zinc-800 p-0 flex flex-col">
+          {activeTask && (
+            <>
+              <SheetHeader className="p-6 border-b border-zinc-800/60">
+                <SheetTitle className="sr-only">Edit Task</SheetTitle>
+                <div className="flex items-start gap-4">
+                  <Checkbox
+                    checked={activeTask.completed}
+                    onCheckedChange={() =>
+                      updateTask(activeTask.id, {
+                        completed: !activeTask.completed,
+                      })
+                    }
+                    className="mt-1 h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                  />
+                  <textarea
+                    value={activeTask.title}
+                    onChange={(e) =>
+                      updateTask(activeTask.id, { title: e.target.value })
+                    }
+                    className="w-full bg-transparent text-lg font-medium text-zinc-100 outline-none resize-none min-h-15"
+                    rows={2}
+                  />
+                </div>
+              </SheetHeader>
+
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-sm font-medium text-zinc-400">
+                    Priority
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-900 outline-none transition-colors text-sm capitalize">
+                      <Flag
+                        className={`h-3.5 w-3.5 ${getPriorityColor(activeTask.priority)}`}
+                      />
+                      {activeTask.priority}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-zinc-900 border-zinc-800 rounded-xl"
+                    >
+                      {["none", "low", "medium", "high"].map((level) => (
+                        <DropdownMenuItem
+                          key={level}
+                          onClick={() =>
+                            updateTask(activeTask.id, {
+                              priority: level as Priority,
+                            })
+                          }
+                          className="capitalize cursor-pointer focus:bg-zinc-800"
+                        >
+                          <Flag
+                            className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
+                          />{" "}
+                          {level}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className="mb-8">
+                  <h4 className="text-sm font-medium text-zinc-400 mb-4">
+                    Subtasks
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {activeTask.subtasks.map((subtask) => (
+                      <div
+                        key={subtask.id}
+                        className="flex items-center gap-3 group"
+                      >
+                        <Checkbox
+                          checked={subtask.completed}
+                          onCheckedChange={() =>
+                            updateSubtask(activeTask.id, subtask.id, {
+                              completed: !subtask.completed,
+                            })
+                          }
+                          className="h-4 w-4 rounded border-zinc-700 data-[state=checked]:bg-purple-600"
+                        />
+                        <Input
+                          value={subtask.title}
+                          onChange={(e) =>
+                            updateSubtask(activeTask.id, subtask.id, {
+                              title: e.target.value,
+                            })
+                          }
+                          className={`h-8 border-transparent bg-transparent hover:bg-zinc-900/50 focus-visible:bg-zinc-900/80 px-2 transition-all ${subtask.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}
+                        />
+
+                        <ConfirmDialog
+                          title="Delete Subtask?"
+                          description="Are you sure you want to remove this subtask?"
+                          onConfirm={() =>
+                            deleteSubtask(activeTask.id, subtask.id)
+                          }
+                        >
+                          <button className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                            <X className="h-4 w-4" />
+                          </button>
+                        </ConfirmDialog>
+                      </div>
+                    ))}
+
+                    <div className="flex items-center gap-3 mt-2">
+                      <Plus className="h-4 w-4 text-zinc-600 ml-0.5" />
+                      <Input
+                        value={newSubtaskTitle}
+                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && newSubtaskTitle.trim()) {
+                            addSubtask(activeTask.id, newSubtaskTitle.trim());
+                            setNewSubtaskTitle("");
+                          }
+                        }}
+                        placeholder="Add subtask..."
+                        className="h-8 border-transparent bg-transparent placeholder:text-zinc-600 focus-visible:bg-zinc-900/50 px-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-zinc-800/60 bg-[#101012] flex justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    duplicateTask(activeTask.id);
+                    setSelectedTaskId(null);
+                  }}
+                  className="text-zinc-400 hover:text-zinc-100 rounded-lg"
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Duplicate
+                </Button>
+
+                <ConfirmDialog
+                  title="Move to Trash?"
+                  description="This task will be moved to the trash bin."
+                  onConfirm={() => {
+                    moveToTrash(activeTask.id);
+                    setSelectedTaskId(null);
+                  }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-400/80 hover:text-red-400 hover:bg-red-950/30 rounded-lg"
+                  >
+                    <Trash className="h-4 w-4 mr-2" /> Delete
+                  </Button>
+                </ConfirmDialog>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+
+  // --- Inline Component for Task Rows (Using Solid Colors) ---
+  function TaskRow({ task }: { task: Task }) {
+    return (
+      <div
+        onClick={() => activeTab !== "trash" && setSelectedTaskId(task.id)}
+        className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
+          task.completed
+            ? "bg-[#121215] border-zinc-800/60 hover:bg-[#18181b] hover:border-zinc-700"
+            : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
+        }`}
+      >
+        <div className="flex items-center gap-4 flex-1 overflow-hidden">
+          <Checkbox
+            checked={task.completed}
+            onCheckedChange={(checked) =>
+              updateTask(task.id, { completed: !!checked })
+            }
+            onClick={(e) => e.stopPropagation()}
+            className="h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+          />
+          <div className="flex flex-col">
+            <span
+              className={`text-sm truncate transition-all duration-200 ${
+                task.completed ? "text-zinc-500 line-through" : "text-zinc-200"
+              }`}
+            >
+              {task.title}
+            </span>
+            {task.subtasks.length > 0 && (
+              <span
+                className={`text-xs mt-0.5 transition-colors ${task.completed ? "text-zinc-600" : "text-zinc-500"}`}
+              >
+                {task.subtasks.filter((s) => s.completed).length}/
+                {task.subtasks.length} subtasks
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div
+          className="flex items-center gap-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {activeTab === "trash" ? (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => restoreFromTrash(task.id)}
+                className="h-8 px-2 text-zinc-400 hover:text-green-400"
+              >
+                Restore
+              </Button>
+              <ConfirmDialog
+                title="Permanently Delete?"
+                description="This task will be deleted forever. This action cannot be undone."
+                onConfirm={() => permanentlyDelete(task.id)}
+              >
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2 text-zinc-400 hover:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </ConfirmDialog>
+            </>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-zinc-700/50 outline-none transition-colors">
+                <Flag
+                  className={`h-4 w-4 ${getPriorityColor(task.priority)}`}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-zinc-900 border-zinc-800 rounded-xl min-w-30"
+              >
+                {["none", "low", "medium", "high"].map((level) => (
+                  <DropdownMenuItem
+                    key={level}
+                    onClick={() =>
+                      updateTask(task.id, { priority: level as Priority })
+                    }
+                    className="capitalize cursor-pointer focus:bg-zinc-800 text-zinc-300"
+                  >
+                    <Flag
+                      className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
+                    />{" "}
+                    {level}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </div>
+    );
+  }
+}
+-------------
+components/shared/ConfirmDialog.tsx
+"use client";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+interface ConfirmDialogProps {
+  children: React.ReactNode;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  destructive?: boolean;
+}
+
+export function ConfirmDialog({
+  children,
+  title,
+  description,
+  onConfirm,
+  confirmText = "Continue",
+  cancelText = "Cancel",
+  destructive = false,
+}: ConfirmDialogProps) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 sm:rounded-2xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-lg">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-zinc-400">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="mt-4">
+          <AlertDialogCancel className="border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100 sm:rounded-xl">
+            {cancelText}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={`sm:rounded-xl text-white ${
+              destructive
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-purple-600 hover:bg-purple-700"
+            }`}
+          >
+            {confirmText}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+--------
+store/useTaskStore.ts 
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export type Priority = "none" | "low" | "medium" | "high";
+
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  priority: Priority;
+  subtasks: Subtask[];
+  date: string; // Stored as YYYY-MM-DD
+  isDeleted: boolean; // For the Trash bin
+}
+
+interface TaskState {
+  tasks: Task[];
+  lastAccessedDate: string;
+  
+  // Core Actions
+  addTask: (title: string) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  duplicateTask: (id: string) => void;
+  moveToTrash: (id: string) => void;
+  restoreFromTrash: (id: string) => void;
+  permanentlyDelete: (id: string) => void;
+  emptyTrash: () => void;
+  
+  // Subtask Actions
+  addSubtask: (taskId: string, title: string) => void;
+  updateSubtask: (taskId: string, subtaskId: string, updates: Partial<Subtask>) => void;
+  deleteSubtask: (taskId: string, subtaskId: string) => void;
+  
+  // Automated Logic
+  processDayEnd: () => void;
+}
+
+const getTodayString = () => new Date().toISOString().split("T")[0];
+
+export const useTaskStore = create<TaskState>()(
+  persist(
+    (set) => ({
+      tasks: [],
+      lastAccessedDate: getTodayString(),
+
+      addTask: (title) => {
+        const newTask: Task = {
+          id: crypto.randomUUID(),
+          title,
+          completed: false,
+          priority: "none",
+          subtasks: [],
+          date: getTodayString(),
+          isDeleted: false,
+        };
+        set((state) => ({ tasks: [newTask, ...state.tasks] }));
+      },
+
+      updateTask: (id, updates) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, ...updates } : task
+          ),
+        }));
+      },
+
+      duplicateTask: (id) => {
+        set((state) => {
+          const taskToCopy = state.tasks.find((t) => t.id === id);
+          if (!taskToCopy) return state;
+
+          const duplicatedTask: Task = {
+            ...taskToCopy,
+            id: crypto.randomUUID(),
+            title: `${taskToCopy.title} (Copy)`,
+            date: getTodayString(), // Duplicates are added to "Today"
+            subtasks: taskToCopy.subtasks.map(st => ({ ...st, id: crypto.randomUUID() }))
+          };
+          
+          return { tasks: [duplicatedTask, ...state.tasks] };
+        });
+      },
+
+      moveToTrash: (id) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, isDeleted: true } : task
+          ),
+        }));
+      },
+
+      restoreFromTrash: (id) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === id ? { ...task, isDeleted: false, date: getTodayString() } : task
+          ),
+        }));
+      },
+
+      permanentlyDelete: (id) => {
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.id !== id),
+        }));
+      },
+
+      emptyTrash: () => {
+        set((state) => ({
+          tasks: state.tasks.filter((task) => !task.isDeleted),
+        }));
+      },
+
+      addSubtask: (taskId, title) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id !== taskId) return task;
+            return {
+              ...task,
+              subtasks: [...task.subtasks, { id: crypto.randomUUID(), title, completed: false }],
+            };
+          }),
+        }));
+      },
+
+      updateSubtask: (taskId, subtaskId, updates) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id !== taskId) return task;
+            return {
+              ...task,
+              subtasks: task.subtasks.map((st) =>
+                st.id === subtaskId ? { ...st, ...updates } : st
+              ),
+            };
+          }),
+        }));
+      },
+
+      deleteSubtask: (taskId, subtaskId) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id !== taskId) return task;
+            return {
+              ...task,
+              subtasks: task.subtasks.filter((st) => st.id !== subtaskId),
+            };
+          }),
+        }));
+      },
+
+      // Simulates the end of the day cron-job logic
+      processDayEnd: () => {
+        const today = getTodayString();
+        set((state) => {
+          if (state.lastAccessedDate === today) return state; // Day hasn't changed
+
+          const updatedTasks = state.tasks.filter((task) => {
+            if (task.isDeleted) return true; // Keep trash as is
+            // If it's completed and from a previous day, remove it entirely
+            if (task.completed && task.date !== today) return false;
+            return true;
+          });
+
+          return {
+            tasks: updatedTasks,
+            lastAccessedDate: today,
+          };
+        });
+      },
+    }),
+    {
+      name: "pluto-tasks-storage",
+    }
+  )
+);
+-----
+components/ui/alert-dialog.ts
+"use client"
+
+import * as React from "react"
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+
+function AlertDialog({
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
+  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
+}
+
+function AlertDialogTrigger({
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Trigger>) {
+  return (
+    <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />
+  )
+}
+
+function AlertDialogPortal({
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+  return (
+    <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />
+  )
+}
+
+function AlertDialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
+  return (
+    <AlertDialogPrimitive.Overlay
+      data-slot="alert-dialog-overlay"
+      className={cn(
+        "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AlertDialogContent({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
+  size?: "default" | "sm"
+}) {
+  return (
+    <AlertDialogPortal>
+      <AlertDialogOverlay />
+      <AlertDialogPrimitive.Content
+        data-slot="alert-dialog-content"
+        data-size={size}
+        className={cn(
+          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          className
+        )}
+        {...props}
+      />
+    </AlertDialogPortal>
+  )
+}
+
+function AlertDialogHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-dialog-header"
+      className={cn(
+        "grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-4 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AlertDialogFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-dialog-footer"
+      className={cn(
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AlertDialogMedia({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-dialog-media"
+      className={cn(
+        "mb-2 inline-flex size-10 items-center justify-center rounded-md bg-muted sm:group-data-[size=default]/alert-dialog-content:row-span-2 *:[svg:not([class*='size-'])]:size-6",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AlertDialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
+  return (
+    <AlertDialogPrimitive.Title
+      data-slot="alert-dialog-title"
+      className={cn(
+        "font-heading text-base font-medium sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AlertDialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
+  return (
+    <AlertDialogPrimitive.Description
+      data-slot="alert-dialog-description"
+      className={cn(
+        "text-sm text-balance text-muted-foreground md:text-pretty *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function AlertDialogAction({
+  className,
+  variant = "default",
+  size = "default",
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
+  Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  return (
+    <Button variant={variant} size={size} asChild>
+      <AlertDialogPrimitive.Action
+        data-slot="alert-dialog-action"
+        className={cn(className)}
+        {...props}
+      />
+    </Button>
+  )
+}
+
+function AlertDialogCancel({
+  className,
+  variant = "outline",
+  size = "default",
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
+  Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  return (
+    <Button variant={variant} size={size} asChild>
+      <AlertDialogPrimitive.Cancel
+        data-slot="alert-dialog-cancel"
+        className={cn(className)}
+        {...props}
+      />
+    </Button>
+  )
+}
+
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogOverlay,
+  AlertDialogPortal,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+}
+------
+components/ui/checkbox.tsx
+"use client"
+
+import * as React from "react"
+import { Checkbox as CheckboxPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+import { CheckIcon } from "lucide-react"
+
+function Checkbox({
+  className,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+  return (
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(
+        "peer relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input transition-colors outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-primary dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary",
+        className
+      )}
+      {...props}
+    >
+      <CheckboxPrimitive.Indicator
+        data-slot="checkbox-indicator"
+        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
+      >
+        <CheckIcon
+        />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
+  )
+}
+
+export { Checkbox }
+--------
+components/ui/dropdown-menu.tsx
+"use client"
+
+import * as React from "react"
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+import { CheckIcon, ChevronRightIcon } from "lucide-react"
+
+function DropdownMenu({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+}
+
+function DropdownMenuPortal({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) {
+  return (
+    <DropdownMenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
+  )
+}
+
+function DropdownMenuTrigger({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+  return (
+    <DropdownMenuPrimitive.Trigger
+      data-slot="dropdown-menu-trigger"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuContent({
+  className,
+  align = "start",
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        data-slot="dropdown-menu-content"
+        sideOffset={sideOffset}
+        align={align}
+        className={cn("z-50 max-h-(--radix-dropdown-menu-content-available-height) w-(--radix-dropdown-menu-trigger-width) min-w-32 origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  )
+}
+
+function DropdownMenuGroup({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
+  return (
+    <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
+  )
+}
+
+function DropdownMenuItem({
+  className,
+  inset,
+  variant = "default",
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+  inset?: boolean
+  variant?: "default" | "destructive"
+}) {
+  return (
+    <DropdownMenuPrimitive.Item
+      data-slot="dropdown-menu-item"
+      data-inset={inset}
+      data-variant={variant}
+      className={cn(
+        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuCheckboxItem({
+  className,
+  children,
+  checked,
+  inset,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.CheckboxItem
+      data-slot="dropdown-menu-checkbox-item"
+      data-inset={inset}
+      className={cn(
+        "relative flex cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      checked={checked}
+      {...props}
+    >
+      <span
+        className="pointer-events-none absolute right-2 flex items-center justify-center"
+        data-slot="dropdown-menu-checkbox-item-indicator"
+      >
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CheckIcon
+          />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.CheckboxItem>
+  )
+}
+
+function DropdownMenuRadioGroup({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>) {
+  return (
+    <DropdownMenuPrimitive.RadioGroup
+      data-slot="dropdown-menu-radio-group"
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuRadioItem({
+  className,
+  children,
+  inset,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.RadioItem
+      data-slot="dropdown-menu-radio-item"
+      data-inset={inset}
+      className={cn(
+        "relative flex cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      <span
+        className="pointer-events-none absolute right-2 flex items-center justify-center"
+        data-slot="dropdown-menu-radio-item-indicator"
+      >
+        <DropdownMenuPrimitive.ItemIndicator>
+          <CheckIcon
+          />
+        </DropdownMenuPrimitive.ItemIndicator>
+      </span>
+      {children}
+    </DropdownMenuPrimitive.RadioItem>
+  )
+}
+
+function DropdownMenuLabel({
+  className,
+  inset,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.Label
+      data-slot="dropdown-menu-label"
+      data-inset={inset}
+      className={cn(
+        "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+  return (
+    <DropdownMenuPrimitive.Separator
+      data-slot="dropdown-menu-separator"
+      className={cn("-mx-1 my-1 h-px bg-border", className)}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuShortcut({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="dropdown-menu-shortcut"
+      className={cn(
+        "ml-auto text-xs tracking-widest text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DropdownMenuSub({
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Sub>) {
+  return <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />
+}
+
+function DropdownMenuSubTrigger({
+  className,
+  inset,
+  children,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
+  inset?: boolean
+}) {
+  return (
+    <DropdownMenuPrimitive.SubTrigger
+      data-slot="dropdown-menu-sub-trigger"
+      data-inset={inset}
+      className={cn(
+        "flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronRightIcon className="ml-auto" />
+    </DropdownMenuPrimitive.SubTrigger>
+  )
+}
+
+function DropdownMenuSubContent({
+  className,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  return (
+    <DropdownMenuPrimitive.SubContent
+      data-slot="dropdown-menu-sub-content"
+      className={cn("z-50 min-w-24 origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95", className )}
+      {...props}
+    />
+  )
+}
+
+export {
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+}
+-------
+components/ui/input.tsx
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+-------
+components/ui/sheet.tsx
+"use client"
+
+import * as React from "react"
+import { Dialog as SheetPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { XIcon } from "lucide-react"
+
+function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
+  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+}
+
+function SheetTrigger({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
+  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+}
+
+function SheetClose({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Close>) {
+  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+}
+
+function SheetPortal({
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+  return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />
+}
+
+function SheetOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
+  return (
+    <SheetPrimitive.Overlay
+      data-slot="sheet-overlay"
+      className={cn(
+        "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SheetContent({
+  className,
+  children,
+  side = "right",
+  showCloseButton = true,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Content> & {
+  side?: "top" | "right" | "bottom" | "left"
+  showCloseButton?: boolean
+}) {
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        data-slot="sheet-content"
+        data-side={side}
+        className={cn(
+          "fixed z-50 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <SheetPrimitive.Close data-slot="sheet-close" asChild>
+            <Button
+              variant="ghost"
+              className="absolute top-3 right-3"
+              size="icon-sm"
+            >
+              <XIcon
+              />
+              <span className="sr-only">Close</span>
+            </Button>
+          </SheetPrimitive.Close>
+        )}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  )
+}
+
+function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-header"
+      className={cn("flex flex-col gap-0.5 p-4", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="sheet-footer"
+      className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+      {...props}
+    />
+  )
+}
+
+function SheetTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+  return (
+    <SheetPrimitive.Title
+      data-slot="sheet-title"
+      className={cn(
+        "font-heading text-base font-medium text-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function SheetDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Description>) {
+  return (
+    <SheetPrimitive.Description
+      data-slot="sheet-description"
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+}
