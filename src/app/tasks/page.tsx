@@ -9,7 +9,6 @@ import {
   Copy,
   Calendar,
   AlertCircle,
-  ListTodo,
   Inbox,
   X,
   Trash,
@@ -132,13 +131,13 @@ export default function TasksPage() {
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
       case "high":
-        return "text-red-500";
+        return "text-red-500 fill-red-500";
       case "medium":
-        return "text-yellow-500";
+        return "text-yellow-500 fill-yellow-500";
       case "low":
-        return "text-green-500";
+        return "text-green-500 fill-green-500";
       default:
-        return "text-zinc-600";
+        return "text-zinc-600"; 
     }
   };
 
@@ -147,27 +146,32 @@ export default function TasksPage() {
   return (
     <div className="flex h-full max-w-6xl mx-auto gap-8">
       {/* Inner Sidebar Navigation */}
-      <div className="w-48 shrink-0 flex flex-col gap-2 pt-2">
-        <div className="flex items-center gap-2 px-3 pb-6 mb-2 border-b border-zinc-800/60">
-          <div className="bg-purple-600/20 p-2 rounded-lg">
-            <ListTodo className="h-5 w-5 text-purple-400" />
-          </div>
-          <span className="font-semibold text-zinc-100">TODO List</span>
+      <div className="w-52 shrink-0 flex flex-col gap-1.5 pt-2">
+        <div className="px-3 pb-4 mb-2">
+          <h2 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-br from-white to-purple-500 drop-shadow-sm">
+            TODO
+          </h2>
         </div>
 
         <button
           onClick={() => setActiveTab("today")}
-          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
             activeTab === "today"
-              ? "bg-zinc-800/80 text-zinc-100"
-              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              ? "bg-[#1c142c] text-[#a78bfa]"
+              : "text-zinc-400 hover:bg-zinc-900/40 hover:text-zinc-200"
           }`}
         >
           <div className="flex items-center gap-3">
             <Calendar className="h-4 w-4" /> Today
           </div>
           {todayPendingCount > 0 && (
-            <span className="bg-zinc-800 text-zinc-300 text-[11px] py-0.5 px-2 rounded-full font-semibold">
+            <span
+              className={`text-[11px] py-0.5 px-2 rounded-lg font-bold border ${
+                activeTab === "today"
+                  ? "border-[#a78bfa]/30 bg-[#a78bfa]/10 text-[#a78bfa]"
+                  : "border-zinc-700/50 bg-zinc-800/30 text-zinc-400"
+              }`}
+            >
               {todayPendingCount}
             </span>
           )}
@@ -175,14 +179,10 @@ export default function TasksPage() {
 
         <button
           onClick={() => setActiveTab("overdue")}
-          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
             activeTab === "overdue"
-              ? overduePendingCount > 0
-                ? "bg-red-950/40 text-red-400"
-                : "bg-zinc-800/80 text-zinc-100"
-              : overduePendingCount > 0
-                ? "text-red-400 hover:bg-red-950/20"
-                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              ? "bg-[#2c1414] text-[#f87171]"
+              : "text-zinc-400 hover:bg-zinc-900/40 hover:text-zinc-200"
           }`}
         >
           <div className="flex items-center gap-3">
@@ -190,10 +190,10 @@ export default function TasksPage() {
           </div>
           {overduePendingCount > 0 && (
             <span
-              className={`text-[11px] py-0.5 px-2 rounded-full font-semibold ${
+              className={`text-[11px] py-0.5 px-2 rounded-lg font-bold border ${
                 activeTab === "overdue"
-                  ? "bg-red-900/50 text-red-200"
-                  : "bg-red-950/50 text-red-400"
+                  ? "border-red-500/30 bg-red-500/10 text-red-400"
+                  : "border-red-900/60 bg-red-950/20 text-red-500"
               }`}
             >
               {overduePendingCount}
@@ -203,16 +203,15 @@ export default function TasksPage() {
 
         <button
           onClick={() => setActiveTab("trash")}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
             activeTab === "trash"
               ? "bg-zinc-800/80 text-zinc-100"
-              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              : "text-zinc-400 hover:bg-zinc-900/40 hover:text-zinc-200"
           }`}
         >
           <Trash2 className="h-4 w-4" /> Trash Bin
         </button>
       </div>
-
       {/* Main Task Area */}
       <div className="flex-1 flex flex-col pt-2">
         {/* Input Bar (Only show on Today tab) */}

@@ -28,22 +28,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         } transition-all duration-300 flex flex-col border-r border-zinc-800/80 bg-[#101012] p-4 justify-between select-none z-50`}
       >
         <div>
-          <div className="flex items-center justify-between mb-8 px-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-900/30">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              {!sidebarCollapsed && (
+          {/* Brand Header */}
+          <div
+            className={`flex items-center mb-8 px-1 ${sidebarCollapsed ? "justify-center mt-1" : "justify-between"}`}
+          >
+            {!sidebarCollapsed && (
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-900/30">
+                  <Sparkles className="h-5 w-5" />
+                </div>
                 <span className="text-xl font-bold tracking-tight text-white whitespace-nowrap overflow-hidden">
                   Pluto
                 </span>
-              )}
-            </div>
+              </div>
+            )}
             <button
               onClick={toggleSidebar}
-              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/50 transition-colors"
+              className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800/50 transition-colors"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 shrink-0" />
             </button>
           </div>
 
