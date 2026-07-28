@@ -23,12 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { SidePanel } from "@/components/shared/SidePanel";
 import { useTaskStore, Task, Priority } from "@/store/useTaskStore";
 
 type Tab = "today" | "overdue" | "trash";
@@ -306,169 +301,166 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Slide-out Sheet for Editing */}
-      <Sheet
-        open={!!selectedTaskId}
-        onOpenChange={(open) => !open && setSelectedTaskId(null)}
+      {/* Reusable Slide-out Side Panel for Task Editing */}
+      <SidePanel
+        isOpen={!!selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+        title="Edit Task"
       >
-        <SheetContent className="w-full sm:max-w-md bg-[#09090b] border-zinc-800 p-0 flex flex-col">
-          {activeTask && (
-            <>
-              <SheetHeader className="p-6 border-b border-zinc-800/60">
-                <SheetTitle className="sr-only">Edit Task</SheetTitle>
-                <div className="flex items-start gap-4">
-                  <Checkbox
-                    checked={activeTask.completed}
-                    onCheckedChange={() =>
-                      updateTask(activeTask.id, {
-                        completed: !activeTask.completed,
-                      })
-                    }
-                    className="mt-1 h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                  />
-                  <textarea
-                    value={activeTask.title}
-                    onChange={(e) =>
-                      updateTask(activeTask.id, { title: e.target.value })
-                    }
-                    className="w-full bg-transparent text-lg font-medium text-zinc-100 outline-none resize-none min-h-15"
-                    rows={2}
-                  />
-                </div>
-              </SheetHeader>
+        {activeTask && (
+          <div className="flex flex-col h-full">
+            {/* Custom Header replicating the old SheetHeader */}
+            <div className="p-6 border-b border-zinc-800/60 flex items-start gap-4 shrink-0">
+              <Checkbox
+                checked={activeTask.completed}
+                onCheckedChange={() =>
+                  updateTask(activeTask.id, {
+                    completed: !activeTask.completed,
+                  })
+                }
+                className="mt-1 h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+              />
+              <textarea
+                value={activeTask.title}
+                onChange={(e) =>
+                  updateTask(activeTask.id, { title: e.target.value })
+                }
+                className="w-full bg-transparent text-lg font-medium text-zinc-100 outline-none resize-none min-h-15"
+                rows={2}
+              />
+            </div>
 
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <span className="text-sm font-medium text-zinc-400">
-                    Priority
-                  </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-900 outline-none transition-colors text-sm capitalize">
-                      <Flag
-                        className={`h-3.5 w-3.5 ${getPriorityColor(activeTask.priority)}`}
-                      />
-                      {activeTask.priority}
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="bg-zinc-900 border-zinc-800 rounded-xl"
-                    >
-                      {["none", "low", "medium", "high"].map((level) => (
-                        <DropdownMenuItem
-                          key={level}
-                          onClick={() =>
-                            updateTask(activeTask.id, {
-                              priority: level as Priority,
-                            })
-                          }
-                          className="capitalize cursor-pointer focus:bg-zinc-800"
-                        >
-                          <Flag
-                            className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
-                          />{" "}
-                          {level}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className="mb-8">
-                  <h4 className="text-sm font-medium text-zinc-400 mb-4">
-                    Subtasks
-                  </h4>
-                  <div className="flex flex-col gap-2">
-                    {activeTask.subtasks.map((subtask) => (
-                      <div
-                        key={subtask.id}
-                        className="flex items-center gap-3 group"
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+              <div className="flex items-center justify-between mb-8">
+                <span className="text-sm font-medium text-zinc-400">
+                  Priority
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-900 outline-none transition-colors text-sm capitalize">
+                    <Flag
+                      className={`h-3.5 w-3.5 ${getPriorityColor(activeTask.priority)}`}
+                    />
+                    {activeTask.priority}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-zinc-900 border-zinc-800 rounded-xl"
+                  >
+                    {["none", "low", "medium", "high"].map((level) => (
+                      <DropdownMenuItem
+                        key={level}
+                        onClick={() =>
+                          updateTask(activeTask.id, {
+                            priority: level as Priority,
+                          })
+                        }
+                        className="capitalize cursor-pointer focus:bg-zinc-800"
                       >
-                        <Checkbox
-                          checked={subtask.completed}
-                          onCheckedChange={() =>
-                            updateSubtask(activeTask.id, subtask.id, {
-                              completed: !subtask.completed,
-                            })
-                          }
-                          className="h-4 w-4 rounded border-zinc-700 data-[state=checked]:bg-purple-600"
-                        />
-                        <Input
-                          value={subtask.title}
-                          onChange={(e) =>
-                            updateSubtask(activeTask.id, subtask.id, {
-                              title: e.target.value,
-                            })
-                          }
-                          className={`h-8 border-transparent bg-transparent hover:bg-zinc-900/50 focus-visible:bg-zinc-900/80 px-2 transition-all ${subtask.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}
-                        />
-
-                        <ConfirmDialog
-                          title="Delete Subtask?"
-                          description="Are you sure you want to remove this subtask?"
-                          onConfirm={() =>
-                            deleteSubtask(activeTask.id, subtask.id)
-                          }
-                        >
-                          <button className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </ConfirmDialog>
-                      </div>
+                        <Flag
+                          className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
+                        />{" "}
+                        {level}
+                      </DropdownMenuItem>
                     ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-                    <div className="flex items-center gap-3 mt-2">
-                      <Plus className="h-4 w-4 text-zinc-600 ml-0.5" />
-                      <Input
-                        value={newSubtaskTitle}
-                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && newSubtaskTitle.trim()) {
-                            addSubtask(activeTask.id, newSubtaskTitle.trim());
-                            setNewSubtaskTitle("");
-                          }
-                        }}
-                        placeholder="Add subtask..."
-                        className="h-8 border-transparent bg-transparent placeholder:text-zinc-600 focus-visible:bg-zinc-900/50 px-2"
+              <div className="mb-8">
+                <h4 className="text-sm font-medium text-zinc-400 mb-4">
+                  Subtasks
+                </h4>
+                <div className="flex flex-col gap-2">
+                  {activeTask.subtasks.map((subtask) => (
+                    <div
+                      key={subtask.id}
+                      className="flex items-center gap-3 group"
+                    >
+                      <Checkbox
+                        checked={subtask.completed}
+                        onCheckedChange={() =>
+                          updateSubtask(activeTask.id, subtask.id, {
+                            completed: !subtask.completed,
+                          })
+                        }
+                        className="h-4 w-4 rounded border-zinc-700 data-[state=checked]:bg-purple-600"
                       />
+                      <Input
+                        value={subtask.title}
+                        onChange={(e) =>
+                          updateSubtask(activeTask.id, subtask.id, {
+                            title: e.target.value,
+                          })
+                        }
+                        className={`h-8 border-transparent bg-transparent hover:bg-zinc-900/50 focus-visible:bg-zinc-900/80 px-2 transition-all ${subtask.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}
+                      />
+
+                      <ConfirmDialog
+                        title="Delete Subtask?"
+                        description="Are you sure you want to remove this subtask?"
+                        onConfirm={() =>
+                          deleteSubtask(activeTask.id, subtask.id)
+                        }
+                      >
+                        <button className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </ConfirmDialog>
                     </div>
+                  ))}
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <Plus className="h-4 w-4 text-zinc-600 ml-0.5" />
+                    <Input
+                      value={newSubtaskTitle}
+                      onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newSubtaskTitle.trim()) {
+                          addSubtask(activeTask.id, newSubtaskTitle.trim());
+                          setNewSubtaskTitle("");
+                        }
+                      }}
+                      placeholder="Add subtask..."
+                      className="h-8 border-transparent bg-transparent placeholder:text-zinc-600 focus-visible:bg-zinc-900/50 px-2"
+                    />
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="p-4 border-t border-zinc-800/60 bg-[#101012] flex justify-between">
+            <div className="p-4 border-t border-zinc-800/60 bg-[#101012] flex justify-between shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  duplicateTask(activeTask.id);
+                  setSelectedTaskId(null);
+                }}
+                className="text-zinc-400 hover:text-zinc-100 rounded-lg"
+              >
+                <Copy className="h-4 w-4 mr-2" /> Duplicate
+              </Button>
+
+              <ConfirmDialog
+                title="Move to Trash?"
+                description="This task will be moved to the trash bin."
+                onConfirm={() => {
+                  moveToTrash(activeTask.id);
+                  setSelectedTaskId(null);
+                }}
+              >
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    duplicateTask(activeTask.id);
-                    setSelectedTaskId(null);
-                  }}
-                  className="text-zinc-400 hover:text-zinc-100 rounded-lg"
+                  className="text-red-400/80 hover:text-red-400 hover:bg-red-950/30 rounded-lg"
                 >
-                  <Copy className="h-4 w-4 mr-2" /> Duplicate
+                  <Trash className="h-4 w-4 mr-2" /> Delete
                 </Button>
-
-                <ConfirmDialog
-                  title="Move to Trash?"
-                  description="This task will be moved to the trash bin."
-                  onConfirm={() => {
-                    moveToTrash(activeTask.id);
-                    setSelectedTaskId(null);
-                  }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-400/80 hover:text-red-400 hover:bg-red-950/30 rounded-lg"
-                  >
-                    <Trash className="h-4 w-4 mr-2" /> Delete
-                  </Button>
-                </ConfirmDialog>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+              </ConfirmDialog>
+            </div>
+          </div>
+        )}
+      </SidePanel>
     </div>
   );
 

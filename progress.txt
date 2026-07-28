@@ -157,7 +157,82 @@ app/global.css
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
-----
+
+/* Custom Scrollbar for Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a; /* zinc-800 */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; /* zinc-700 */
+}
+
+/* Custom Scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #27272a transparent;
+}
+/* Tiptap Rich Text Editor Styles */
+.tiptap {
+  outline: none;
+  min-height: 350px;
+  color: #f4f4f5; /* zinc-100 */
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #52525b; /* zinc-600 */
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap p {
+  margin-bottom: 0.75em;
+  line-height: 1.6;
+}
+
+.tiptap h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+
+.tiptap h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75em;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75em;
+}
+
+/* Hide default Shadcn Dialog Close button so we can use our custom top-right toolbar */
+[data-slot="dialog-close"] {
+  display: none !important;
+}
+-------
 app/layout.tsx 
 import type { Metadata } from "next";
 import "./globals.css";
@@ -213,22 +288,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         } transition-all duration-300 flex flex-col border-r border-zinc-800/80 bg-[#101012] p-4 justify-between select-none z-50`}
       >
         <div>
-          <div className="flex items-center justify-between mb-8 px-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-900/30">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              {!sidebarCollapsed && (
+          {/* Brand Header */}
+          <div
+            className={`flex items-center mb-8 px-1 ${sidebarCollapsed ? "justify-center mt-1" : "justify-between"}`}
+          >
+            {!sidebarCollapsed && (
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white shadow-lg shadow-purple-900/30">
+                  <Sparkles className="h-5 w-5" />
+                </div>
                 <span className="text-xl font-bold tracking-tight text-white whitespace-nowrap overflow-hidden">
                   Pluto
                 </span>
-              )}
-            </div>
+              </div>
+            )}
             <button
               onClick={toggleSidebar}
-              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800/50 transition-colors"
+              className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800/50 transition-colors"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 shrink-0" />
             </button>
           </div>
 
@@ -481,6 +559,9 @@ package.json
     "lint": "eslint"
   },
   "dependencies": {
+    "@tiptap/extension-placeholder": "^3.29.0",
+    "@tiptap/react": "^3.29.0",
+    "@tiptap/starter-kit": "^3.29.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.26.0",
@@ -566,7 +647,6 @@ import {
   Copy,
   Calendar,
   AlertCircle,
-  ListTodo,
   Inbox,
   X,
   Trash,
@@ -581,12 +661,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { SidePanel } from "@/components/shared/SidePanel";
 import { useTaskStore, Task, Priority } from "@/store/useTaskStore";
 
 type Tab = "today" | "overdue" | "trash";
@@ -689,13 +764,13 @@ export default function TasksPage() {
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
       case "high":
-        return "text-red-500";
+        return "text-red-500 fill-red-500";
       case "medium":
-        return "text-yellow-500";
+        return "text-yellow-500 fill-yellow-500";
       case "low":
-        return "text-green-500";
+        return "text-green-500 fill-green-500";
       default:
-        return "text-zinc-600";
+        return "text-zinc-600"; 
     }
   };
 
@@ -704,27 +779,32 @@ export default function TasksPage() {
   return (
     <div className="flex h-full max-w-6xl mx-auto gap-8">
       {/* Inner Sidebar Navigation */}
-      <div className="w-48 shrink-0 flex flex-col gap-2 pt-2">
-        <div className="flex items-center gap-2 px-3 pb-6 mb-2 border-b border-zinc-800/60">
-          <div className="bg-purple-600/20 p-2 rounded-lg">
-            <ListTodo className="h-5 w-5 text-purple-400" />
-          </div>
-          <span className="font-semibold text-zinc-100">TODO List</span>
+      <div className="w-52 shrink-0 flex flex-col gap-1.5 pt-2">
+        <div className="px-3 pb-4 mb-2">
+          <h2 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-br from-white to-purple-500 drop-shadow-sm">
+            TODO
+          </h2>
         </div>
 
         <button
           onClick={() => setActiveTab("today")}
-          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
             activeTab === "today"
-              ? "bg-zinc-800/80 text-zinc-100"
-              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              ? "bg-[#1c142c] text-[#a78bfa]"
+              : "text-zinc-400 hover:bg-zinc-900/40 hover:text-zinc-200"
           }`}
         >
           <div className="flex items-center gap-3">
             <Calendar className="h-4 w-4" /> Today
           </div>
           {todayPendingCount > 0 && (
-            <span className="bg-zinc-800 text-zinc-300 text-[11px] py-0.5 px-2 rounded-full font-semibold">
+            <span
+              className={`text-[11px] py-0.5 px-2 rounded-lg font-bold border ${
+                activeTab === "today"
+                  ? "border-[#a78bfa]/30 bg-[#a78bfa]/10 text-[#a78bfa]"
+                  : "border-zinc-700/50 bg-zinc-800/30 text-zinc-400"
+              }`}
+            >
               {todayPendingCount}
             </span>
           )}
@@ -732,14 +812,10 @@ export default function TasksPage() {
 
         <button
           onClick={() => setActiveTab("overdue")}
-          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
             activeTab === "overdue"
-              ? overduePendingCount > 0
-                ? "bg-red-950/40 text-red-400"
-                : "bg-zinc-800/80 text-zinc-100"
-              : overduePendingCount > 0
-                ? "text-red-400 hover:bg-red-950/20"
-                : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              ? "bg-[#2c1414] text-[#f87171]"
+              : "text-zinc-400 hover:bg-zinc-900/40 hover:text-zinc-200"
           }`}
         >
           <div className="flex items-center gap-3">
@@ -747,10 +823,10 @@ export default function TasksPage() {
           </div>
           {overduePendingCount > 0 && (
             <span
-              className={`text-[11px] py-0.5 px-2 rounded-full font-semibold ${
+              className={`text-[11px] py-0.5 px-2 rounded-lg font-bold border ${
                 activeTab === "overdue"
-                  ? "bg-red-900/50 text-red-200"
-                  : "bg-red-950/50 text-red-400"
+                  ? "border-red-500/30 bg-red-500/10 text-red-400"
+                  : "border-red-900/60 bg-red-950/20 text-red-500"
               }`}
             >
               {overduePendingCount}
@@ -760,16 +836,15 @@ export default function TasksPage() {
 
         <button
           onClick={() => setActiveTab("trash")}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+          className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
             activeTab === "trash"
               ? "bg-zinc-800/80 text-zinc-100"
-              : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
+              : "text-zinc-400 hover:bg-zinc-900/40 hover:text-zinc-200"
           }`}
         >
           <Trash2 className="h-4 w-4" /> Trash Bin
         </button>
       </div>
-
       {/* Main Task Area */}
       <div className="flex-1 flex flex-col pt-2">
         {/* Input Bar (Only show on Today tab) */}
@@ -864,169 +939,166 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Slide-out Sheet for Editing */}
-      <Sheet
-        open={!!selectedTaskId}
-        onOpenChange={(open) => !open && setSelectedTaskId(null)}
+      {/* Reusable Slide-out Side Panel for Task Editing */}
+      <SidePanel
+        isOpen={!!selectedTaskId}
+        onClose={() => setSelectedTaskId(null)}
+        title="Edit Task"
       >
-        <SheetContent className="w-full sm:max-w-md bg-[#09090b] border-zinc-800 p-0 flex flex-col">
-          {activeTask && (
-            <>
-              <SheetHeader className="p-6 border-b border-zinc-800/60">
-                <SheetTitle className="sr-only">Edit Task</SheetTitle>
-                <div className="flex items-start gap-4">
-                  <Checkbox
-                    checked={activeTask.completed}
-                    onCheckedChange={() =>
-                      updateTask(activeTask.id, {
-                        completed: !activeTask.completed,
-                      })
-                    }
-                    className="mt-1 h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                  />
-                  <textarea
-                    value={activeTask.title}
-                    onChange={(e) =>
-                      updateTask(activeTask.id, { title: e.target.value })
-                    }
-                    className="w-full bg-transparent text-lg font-medium text-zinc-100 outline-none resize-none min-h-15"
-                    rows={2}
-                  />
-                </div>
-              </SheetHeader>
+        {activeTask && (
+          <div className="flex flex-col h-full">
+            {/* Custom Header replicating the old SheetHeader */}
+            <div className="p-6 border-b border-zinc-800/60 flex items-start gap-4 shrink-0">
+              <Checkbox
+                checked={activeTask.completed}
+                onCheckedChange={() =>
+                  updateTask(activeTask.id, {
+                    completed: !activeTask.completed,
+                  })
+                }
+                className="mt-1 h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+              />
+              <textarea
+                value={activeTask.title}
+                onChange={(e) =>
+                  updateTask(activeTask.id, { title: e.target.value })
+                }
+                className="w-full bg-transparent text-lg font-medium text-zinc-100 outline-none resize-none min-h-15"
+                rows={2}
+              />
+            </div>
 
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <span className="text-sm font-medium text-zinc-400">
-                    Priority
-                  </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-900 outline-none transition-colors text-sm capitalize">
-                      <Flag
-                        className={`h-3.5 w-3.5 ${getPriorityColor(activeTask.priority)}`}
-                      />
-                      {activeTask.priority}
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="bg-zinc-900 border-zinc-800 rounded-xl"
-                    >
-                      {["none", "low", "medium", "high"].map((level) => (
-                        <DropdownMenuItem
-                          key={level}
-                          onClick={() =>
-                            updateTask(activeTask.id, {
-                              priority: level as Priority,
-                            })
-                          }
-                          className="capitalize cursor-pointer focus:bg-zinc-800"
-                        >
-                          <Flag
-                            className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
-                          />{" "}
-                          {level}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className="mb-8">
-                  <h4 className="text-sm font-medium text-zinc-400 mb-4">
-                    Subtasks
-                  </h4>
-                  <div className="flex flex-col gap-2">
-                    {activeTask.subtasks.map((subtask) => (
-                      <div
-                        key={subtask.id}
-                        className="flex items-center gap-3 group"
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+              <div className="flex items-center justify-between mb-8">
+                <span className="text-sm font-medium text-zinc-400">
+                  Priority
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-900 outline-none transition-colors text-sm capitalize">
+                    <Flag
+                      className={`h-3.5 w-3.5 ${getPriorityColor(activeTask.priority)}`}
+                    />
+                    {activeTask.priority}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-zinc-900 border-zinc-800 rounded-xl"
+                  >
+                    {["none", "low", "medium", "high"].map((level) => (
+                      <DropdownMenuItem
+                        key={level}
+                        onClick={() =>
+                          updateTask(activeTask.id, {
+                            priority: level as Priority,
+                          })
+                        }
+                        className="capitalize cursor-pointer focus:bg-zinc-800"
                       >
-                        <Checkbox
-                          checked={subtask.completed}
-                          onCheckedChange={() =>
-                            updateSubtask(activeTask.id, subtask.id, {
-                              completed: !subtask.completed,
-                            })
-                          }
-                          className="h-4 w-4 rounded border-zinc-700 data-[state=checked]:bg-purple-600"
-                        />
-                        <Input
-                          value={subtask.title}
-                          onChange={(e) =>
-                            updateSubtask(activeTask.id, subtask.id, {
-                              title: e.target.value,
-                            })
-                          }
-                          className={`h-8 border-transparent bg-transparent hover:bg-zinc-900/50 focus-visible:bg-zinc-900/80 px-2 transition-all ${subtask.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}
-                        />
-
-                        <ConfirmDialog
-                          title="Delete Subtask?"
-                          description="Are you sure you want to remove this subtask?"
-                          onConfirm={() =>
-                            deleteSubtask(activeTask.id, subtask.id)
-                          }
-                        >
-                          <button className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </ConfirmDialog>
-                      </div>
+                        <Flag
+                          className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
+                        />{" "}
+                        {level}
+                      </DropdownMenuItem>
                     ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-                    <div className="flex items-center gap-3 mt-2">
-                      <Plus className="h-4 w-4 text-zinc-600 ml-0.5" />
-                      <Input
-                        value={newSubtaskTitle}
-                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && newSubtaskTitle.trim()) {
-                            addSubtask(activeTask.id, newSubtaskTitle.trim());
-                            setNewSubtaskTitle("");
-                          }
-                        }}
-                        placeholder="Add subtask..."
-                        className="h-8 border-transparent bg-transparent placeholder:text-zinc-600 focus-visible:bg-zinc-900/50 px-2"
+              <div className="mb-8">
+                <h4 className="text-sm font-medium text-zinc-400 mb-4">
+                  Subtasks
+                </h4>
+                <div className="flex flex-col gap-2">
+                  {activeTask.subtasks.map((subtask) => (
+                    <div
+                      key={subtask.id}
+                      className="flex items-center gap-3 group"
+                    >
+                      <Checkbox
+                        checked={subtask.completed}
+                        onCheckedChange={() =>
+                          updateSubtask(activeTask.id, subtask.id, {
+                            completed: !subtask.completed,
+                          })
+                        }
+                        className="h-4 w-4 rounded border-zinc-700 data-[state=checked]:bg-purple-600"
                       />
+                      <Input
+                        value={subtask.title}
+                        onChange={(e) =>
+                          updateSubtask(activeTask.id, subtask.id, {
+                            title: e.target.value,
+                          })
+                        }
+                        className={`h-8 border-transparent bg-transparent hover:bg-zinc-900/50 focus-visible:bg-zinc-900/80 px-2 transition-all ${subtask.completed ? "text-zinc-500 line-through" : "text-zinc-200"}`}
+                      />
+
+                      <ConfirmDialog
+                        title="Delete Subtask?"
+                        description="Are you sure you want to remove this subtask?"
+                        onConfirm={() =>
+                          deleteSubtask(activeTask.id, subtask.id)
+                        }
+                      >
+                        <button className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </ConfirmDialog>
                     </div>
+                  ))}
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <Plus className="h-4 w-4 text-zinc-600 ml-0.5" />
+                    <Input
+                      value={newSubtaskTitle}
+                      onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newSubtaskTitle.trim()) {
+                          addSubtask(activeTask.id, newSubtaskTitle.trim());
+                          setNewSubtaskTitle("");
+                        }
+                      }}
+                      placeholder="Add subtask..."
+                      className="h-8 border-transparent bg-transparent placeholder:text-zinc-600 focus-visible:bg-zinc-900/50 px-2"
+                    />
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="p-4 border-t border-zinc-800/60 bg-[#101012] flex justify-between">
+            <div className="p-4 border-t border-zinc-800/60 bg-[#101012] flex justify-between shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  duplicateTask(activeTask.id);
+                  setSelectedTaskId(null);
+                }}
+                className="text-zinc-400 hover:text-zinc-100 rounded-lg"
+              >
+                <Copy className="h-4 w-4 mr-2" /> Duplicate
+              </Button>
+
+              <ConfirmDialog
+                title="Move to Trash?"
+                description="This task will be moved to the trash bin."
+                onConfirm={() => {
+                  moveToTrash(activeTask.id);
+                  setSelectedTaskId(null);
+                }}
+              >
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    duplicateTask(activeTask.id);
-                    setSelectedTaskId(null);
-                  }}
-                  className="text-zinc-400 hover:text-zinc-100 rounded-lg"
+                  className="text-red-400/80 hover:text-red-400 hover:bg-red-950/30 rounded-lg"
                 >
-                  <Copy className="h-4 w-4 mr-2" /> Duplicate
+                  <Trash className="h-4 w-4 mr-2" /> Delete
                 </Button>
-
-                <ConfirmDialog
-                  title="Move to Trash?"
-                  description="This task will be moved to the trash bin."
-                  onConfirm={() => {
-                    moveToTrash(activeTask.id);
-                    setSelectedTaskId(null);
-                  }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-400/80 hover:text-red-400 hover:bg-red-950/30 rounded-lg"
-                  >
-                    <Trash className="h-4 w-4 mr-2" /> Delete
-                  </Button>
-                </ConfirmDialog>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+              </ConfirmDialog>
+            </div>
+          </div>
+        )}
+      </SidePanel>
     </div>
   );
 
@@ -1131,6 +1203,47 @@ export default function TasksPage() {
   }
 }
 -------------
+components/shared/SidePanel.tsx
+"use client";
+
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { ReactNode } from "react";
+
+interface SidePanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+}
+
+export function SidePanel({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: SidePanelProps) {
+  return (
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      {/* 
+        We use bg-[#09090b] with border-zinc-800 to match Pluto's exact aesthetic.
+        Padding is removed from the root so children can implement flush borders/headers.
+      */}
+      <SheetContent className="w-full sm:max-w-md bg-[#09090b] border-zinc-800 p-0 flex flex-col">
+        <SheetHeader className="sr-only">
+          <SheetTitle>{title || "Side Panel"}</SheetTitle>
+        </SheetHeader>
+        {children}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+-----------
 components/shared/ConfirmDialog.tsx
 "use client";
 
@@ -1373,6 +1486,1457 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: "pluto-tasks-storage",
+    }
+  )
+);
+-----
+notes/page.tsx
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Search, FileText, Trash2, LayoutGrid, X } from "lucide-react";
+import { useNoteStore } from "@/store/useNoteStore";
+import { NoteEditor } from "@/components/notes/NoteEditor";
+import { NoteCard } from "@/components/notes/NoteCard";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+
+type Tab = "active" | "trash";
+
+export default function NotesPage() {
+  const {
+    notes,
+    addNote,
+    togglePin,
+    emptyTrash,
+    restoreFromTrash,
+    permanentlyDelete,
+    moveToTrash,
+  } = useNoteStore();
+
+  const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+
+  // Selection State
+  const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
+  const isSelectionMode = selectedNoteIds.length > 0;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Clear selections when switching tabs (pushed to next tick to avoid cascading render)
+  useEffect(() => {
+    const timer = setTimeout(() => setSelectedNoteIds([]), 0);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
+  const filteredNotes = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return notes.filter((note) => {
+      const matchesTab =
+        activeTab === "trash" ? note.isDeleted : !note.isDeleted;
+      const matchesSearch =
+        note.title.toLowerCase().includes(query) ||
+        note.content.toLowerCase().includes(query);
+      return matchesTab && matchesSearch;
+    });
+  }, [notes, activeTab, searchQuery]);
+
+  const pinnedNotes = useMemo(
+    () => filteredNotes.filter((n) => n.isPinned),
+    [filteredNotes],
+  );
+  const otherNotes = useMemo(
+    () => filteredNotes.filter((n) => !n.isPinned),
+    [filteredNotes],
+  );
+
+  const handleCreateNote = () => {
+    const newNoteId = addNote("", "");
+    setEditingNoteId(newNoteId);
+  };
+
+  // --- Bulk Selection Handlers ---
+  const toggleNoteSelection = (id: string) => {
+    setSelectedNoteIds((prev) =>
+      prev.includes(id) ? prev.filter((nId) => nId !== id) : [...prev, id],
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedNoteIds.length === filteredNotes.length) {
+      setSelectedNoteIds([]); // Deselect all
+    } else {
+      setSelectedNoteIds(filteredNotes.map((n) => n.id)); // Select all
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (activeTab === "trash") {
+      selectedNoteIds.forEach((id) => permanentlyDelete(id));
+    } else {
+      selectedNoteIds.forEach((id) => moveToTrash(id));
+    }
+    setSelectedNoteIds([]);
+  };
+
+  // A helper function to manage clicking cards contextually
+  const handleCardClick = (id: string) => {
+    if (isSelectionMode) {
+      toggleNoteSelection(id);
+    } else {
+      setEditingNoteId(id);
+    }
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="flex flex-col h-full max-w-7xl mx-auto px-2 relative">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between mb-10 pt-2">
+        <h2 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-br from-white to-purple-500 drop-shadow-sm">
+          Notes
+        </h2>
+
+        <div className="flex bg-[#121215] p-1 rounded-xl border border-zinc-800/60">
+          <button
+            onClick={() => setActiveTab("active")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === "active"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <FileText className="h-4 w-4" /> Active
+          </button>
+          <button
+            onClick={() => setActiveTab("trash")}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === "trash"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <Trash2 className="h-4 w-4" /> Trash
+          </button>
+        </div>
+      </div>
+
+      {/* Action Bar (Search & Create) */}
+      {activeTab === "active" && (
+        <div className="flex justify-center mb-12">
+          <div className="relative w-full max-w-2xl group">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search notes..."
+              className="w-full h-14 bg-[#121215] border border-zinc-800/80 rounded-2xl pl-12 pr-32 text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-purple-500/50 focus:ring-4 focus:ring-purple-500/10 transition-all shadow-sm"
+            />
+            <button
+              onClick={handleCreateNote}
+              className="absolute inset-y-2 right-2 flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 rounded-xl text-sm font-medium transition-colors"
+            >
+              <Plus className="h-4 w-4" /> Take a note...
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Trash Empty Action */}
+      {activeTab === "trash" && filteredNotes.length > 0 && (
+        <div className="flex justify-end mb-8">
+          <ConfirmDialog
+            title="Empty Trash?"
+            description="All deleted notes will be permanently erased. This cannot be undone."
+            onConfirm={emptyTrash}
+            destructive
+          >
+            <Button
+              variant="destructive"
+              className="rounded-xl shadow-lg shadow-red-900/20"
+            >
+              Empty Trash
+            </Button>
+          </ConfirmDialog>
+        </div>
+      )}
+
+      {/* Note Grids Container */}
+      <div className="flex-1 overflow-y-auto pb-32 custom-scrollbar pr-2">
+        {filteredNotes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32 text-zinc-500">
+            <LayoutGrid className="h-12 w-12 mb-4 opacity-20" />
+            <p>No notes found.</p>
+          </div>
+        ) : activeTab === "active" ? (
+          <div className="flex flex-col gap-10">
+            {/* Pinned Section */}
+            {pinnedNotes.length > 0 && (
+              <section>
+                <h3 className="text-xs font-bold text-zinc-500 tracking-widest uppercase mb-4 ml-2">
+                  Pinned
+                </h3>
+                <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+                  {pinnedNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      isSelected={selectedNoteIds.includes(note.id)}
+                      isSelectionMode={isSelectionMode}
+                      onToggleSelect={() => toggleNoteSelection(note.id)}
+                      onClick={() => handleCardClick(note.id)}
+                      onTogglePin={(e) => {
+                        e.stopPropagation();
+                        togglePin(note.id);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Others Section */}
+            {otherNotes.length > 0 && (
+              <section>
+                {pinnedNotes.length > 0 && (
+                  <h3 className="text-xs font-bold text-zinc-500 tracking-widest uppercase mb-4 ml-2">
+                    Others
+                  </h3>
+                )}
+                <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+                  {otherNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      isSelected={selectedNoteIds.includes(note.id)}
+                      isSelectionMode={isSelectionMode}
+                      onToggleSelect={() => toggleNoteSelection(note.id)}
+                      onClick={() => handleCardClick(note.id)}
+                      onTogglePin={(e) => {
+                        e.stopPropagation();
+                        togglePin(note.id);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        ) : (
+          /* Trash Section */
+          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4">
+            {filteredNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                isSelected={selectedNoteIds.includes(note.id)}
+                isSelectionMode={isSelectionMode}
+                onToggleSelect={() => toggleNoteSelection(note.id)}
+                onClick={() => handleCardClick(note.id)}
+                onTogglePin={() => {}}
+                onRestore={(e) => {
+                  e.stopPropagation();
+                  restoreFromTrash(note.id);
+                }}
+                onPermanentDelete={() => permanentlyDelete(note.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Bulk Action Bar */}
+      {isSelectionMode && (
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-[#18181b] border border-zinc-700/80 px-6 py-3 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-200">
+          <span className="text-sm font-semibold text-purple-400 whitespace-nowrap">
+            {selectedNoteIds.length} selected
+          </span>
+
+          <div className="w-px h-5 bg-zinc-700" />
+
+          <button
+            onClick={handleSelectAll}
+            className="text-sm font-medium text-zinc-300 hover:text-white transition-colors whitespace-nowrap"
+          >
+            {selectedNoteIds.length === filteredNotes.length
+              ? "Deselect All"
+              : "Select All"}
+          </button>
+
+          <div className="w-px h-5 bg-zinc-700" />
+
+          <ConfirmDialog
+            title={
+              activeTab === "trash"
+                ? "Permanently Delete Selected?"
+                : "Move Selected to Trash?"
+            }
+            description={`Are you sure you want to delete ${selectedNoteIds.length} note(s)?`}
+            onConfirm={handleBulkDelete}
+            destructive
+          >
+            <button className="text-sm font-medium text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 whitespace-nowrap">
+              <Trash2 className="h-4 w-4" /> Delete
+            </button>
+          </ConfirmDialog>
+
+          <div className="w-px h-5 bg-zinc-700" />
+
+          <button
+            onClick={() => setSelectedNoteIds([])}
+            className="p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-zinc-800"
+            title="Cancel"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Rich Text Editor Component */}
+      <NoteEditor
+        noteId={editingNoteId}
+        isOpen={!!editingNoteId}
+        onClose={() => setEditingNoteId(null)}
+      />
+    </div>
+  );
+}
+---------
+components/notes/NoteCard.tsx
+"use client";
+
+import { Pin, Trash2, RotateCcw } from "lucide-react";
+import { Note, NoteColor } from "@/store/useNoteStore";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface NoteCardProps {
+  note: Note;
+  onClick: () => void;
+  onTogglePin: (e: React.MouseEvent) => void;
+  onRestore?: (e: React.MouseEvent) => void;
+  onPermanentDelete?: () => void;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
+  onToggleSelect?: () => void;
+}
+
+const cardColors: Record<NoteColor, string> = {
+  default:
+    "bg-[#121215] border-zinc-800/80 hover:border-zinc-700 text-zinc-100",
+  red: "bg-[#2a1215] border-red-900/40 hover:border-red-800/80 text-red-50",
+  orange:
+    "bg-[#2a1a12] border-orange-900/40 hover:border-orange-800/80 text-orange-50",
+  yellow:
+    "bg-[#2a2412] border-yellow-900/40 hover:border-yellow-800/80 text-yellow-50",
+  green:
+    "bg-[#122a18] border-green-900/40 hover:border-green-800/80 text-green-50",
+  blue: "bg-[#121c2a] border-blue-900/40 hover:border-blue-800/80 text-blue-50",
+  purple:
+    "bg-[#1e122a] border-purple-900/40 hover:border-purple-800/80 text-purple-50",
+};
+
+const iconColors: Record<NoteColor, string> = {
+  default: "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800",
+  red: "text-red-500 hover:text-red-300 hover:bg-red-950",
+  orange: "text-orange-500 hover:text-orange-300 hover:bg-orange-950",
+  yellow: "text-yellow-500 hover:text-yellow-300 hover:bg-yellow-950",
+  green: "text-green-500 hover:text-green-300 hover:bg-green-950",
+  blue: "text-blue-500 hover:text-blue-300 hover:bg-blue-950",
+  purple: "text-purple-500 hover:text-purple-300 hover:bg-purple-950",
+};
+
+export function NoteCard({
+  note,
+  onClick,
+  onTogglePin,
+  onRestore,
+  onPermanentDelete,
+  isSelected,
+  isSelectionMode,
+  onToggleSelect,
+}: NoteCardProps) {
+  const previewText = note.content
+    .replace(/<[^>]*>?/gm, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return (
+    <div
+      onClick={onClick}
+      className={`group relative flex flex-col p-5 rounded-2xl border transition-all duration-300 cursor-pointer break-inside-avoid shadow-sm hover:shadow-md mb-4 ${cardColors[note.color]} ${isSelected ? "ring-2 ring-inset ring-purple-500 border-transparent" : ""}`}
+    >
+      <div className="flex justify-between items-start gap-2 mb-3">
+        <div className="flex items-start gap-3 overflow-hidden flex-1">
+          {/* Select Checkbox (Appears on hover or when active) */}
+          <div
+            className={`shrink-0 pt-0.5 transition-opacity duration-200 ${isSelected || isSelectionMode ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+            onClick={(e) => e.stopPropagation()} // Prevent card click when clicking checkbox
+          >
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onToggleSelect}
+              className="h-5 w-5 rounded-md data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 border-zinc-500"
+            />
+          </div>
+          <h3 className="font-semibold text-base leading-tight truncate mt-0.5">
+            {note.title || "Untitled Note"}
+          </h3>
+        </div>
+
+        {/* Contextual Top-Right Actions */}
+        {!note.isDeleted ? (
+          <button
+            onClick={onTogglePin}
+            className={`shrink-0 p-1.5 rounded-full transition-all duration-200 ${
+              note.isPinned
+                ? "opacity-100 bg-black/20"
+                : "opacity-0 group-hover:opacity-100"
+            } ${iconColors[note.color]}`}
+            title={note.isPinned ? "Unpin note" : "Pin note"}
+          >
+            <Pin className={`h-4 w-4 ${note.isPinned ? "fill-current" : ""}`} />
+          </button>
+        ) : (
+          <div
+            className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={onRestore}
+              className="p-1.5 rounded-full transition-all duration-200 hover:bg-black/20 text-zinc-400 hover:text-green-400"
+              title="Restore Note"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+            <ConfirmDialog
+              title="Permanently Delete?"
+              description="This note will be deleted forever. This action cannot be undone."
+              onConfirm={onPermanentDelete!}
+              destructive
+            >
+              <button
+                className="p-1.5 rounded-full transition-all duration-200 hover:bg-black/20 text-zinc-400 hover:text-red-400"
+                title="Delete forever"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </ConfirmDialog>
+          </div>
+        )}
+      </div>
+
+      <p className="text-sm opacity-70 line-clamp-6 whitespace-pre-wrap leading-relaxed">
+        {previewText || (
+          <span className="italic opacity-50">Empty note...</span>
+        )}
+      </p>
+    </div>
+  );
+}
+--------------
+components/notes/NoteEditor.tsx
+"use client";
+
+import { useEffect } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import { useNoteStore, NoteColor } from "@/store/useNoteStore";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import {
+  Bold,
+  Italic,
+  Strikethrough,
+  Heading1,
+  Heading2,
+  List,
+  ListOrdered,
+  Undo,
+  Redo,
+  Palette,
+  Trash2,
+  X,
+  RotateCcw,
+} from "lucide-react";
+
+interface NoteEditorProps {
+  noteId: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const colorMap: Record<NoteColor, string> = {
+  default: "border-zinc-800 shadow-xl shadow-black",
+  red: "border-red-500/50 shadow-2xl shadow-red-900/10",
+  orange: "border-orange-500/50 shadow-2xl shadow-orange-900/10",
+  yellow: "border-yellow-500/50 shadow-2xl shadow-yellow-900/10",
+  green: "border-green-500/50 shadow-2xl shadow-green-900/10",
+  blue: "border-blue-500/50 shadow-2xl shadow-blue-900/10",
+  purple: "border-purple-500/50 shadow-2xl shadow-purple-900/10",
+};
+
+const bgColors: { name: NoteColor; class: string }[] = [
+  { name: "default", class: "bg-zinc-800" },
+  { name: "red", class: "bg-red-500" },
+  { name: "orange", class: "bg-orange-500" },
+  { name: "yellow", class: "bg-yellow-500" },
+  { name: "green", class: "bg-green-500" },
+  { name: "blue", class: "bg-blue-500" },
+  { name: "purple", class: "bg-purple-500" },
+];
+
+interface ToolbarButtonProps {
+  onClick: () => void;
+  isActive: boolean;
+  icon: React.ElementType;
+}
+
+const ToolbarButton = ({
+  onClick,
+  isActive,
+  icon: Icon,
+}: ToolbarButtonProps) => (
+  <button
+    onClick={onClick}
+    className={`p-1.5 rounded-lg transition-colors ${
+      isActive
+        ? "bg-zinc-800 text-zinc-100"
+        : "text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-300"
+    }`}
+  >
+    <Icon className="h-4 w-4" />
+  </button>
+);
+
+export function NoteEditor({ noteId, isOpen, onClose }: NoteEditorProps) {
+  const {
+    notes,
+    updateNote,
+    moveToTrash,
+    restoreFromTrash,
+    permanentlyDelete,
+    changeColor,
+  } = useNoteStore();
+  const note = notes.find((n) => n.id === noteId);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: "Start writing..." }),
+    ],
+    content: note?.content || "",
+    onUpdate: ({ editor }) => {
+      if (noteId) updateNote(noteId, { content: editor.getHTML() });
+    },
+  });
+
+  useEffect(() => {
+    if (editor && note && editor.getHTML() !== note.content) {
+      editor.commands.setContent(note.content);
+    }
+  }, [noteId, editor, note]);
+
+  if (!note) return null;
+
+  const formattedDate = new Date(note.updatedAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const handleTrashAction = () => {
+    if (note.isDeleted) {
+      permanentlyDelete(note.id);
+    } else {
+      moveToTrash(note.id);
+    }
+    onClose();
+  };
+
+  const handleRestore = () => {
+    restoreFromTrash(note.id);
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className={`sm:max-w-3xl bg-[#121215] p-0 gap-0 transition-colors duration-300 ${colorMap[note.color]}`}
+      >
+        <DialogTitle className="sr-only">Edit Note</DialogTitle>
+
+        <div className="flex justify-between items-start p-8 pb-4">
+          <div className="flex-1 mr-8">
+            <input
+              value={note.title}
+              onChange={(e) => updateNote(note.id, { title: e.target.value })}
+              placeholder="Note Title"
+              className="w-full bg-transparent text-3xl font-bold text-zinc-100 outline-none placeholder:text-zinc-700 mb-2"
+            />
+            <p className="text-xs text-zinc-500 font-medium tracking-wide">
+              Last edited: {formattedDate}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-zinc-400">
+            {note.isDeleted && (
+              <button
+                onClick={handleRestore}
+                className="p-2 hover:bg-zinc-800/60 hover:text-green-400 rounded-lg transition-colors"
+                title="Restore Note"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+
+            {!note.isDeleted && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="p-2 hover:bg-zinc-800/60 hover:text-zinc-200 rounded-lg transition-colors">
+                    <Palette className="h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-3 bg-[#18181b] border-zinc-800 rounded-xl"
+                  align="end"
+                >
+                  <div className="flex gap-2">
+                    {bgColors.map((c) => (
+                      <button
+                        key={c.name}
+                        onClick={() => changeColor(note.id, c.name)}
+                        className={`h-6 w-6 rounded-full cursor-pointer transition-transform hover:scale-110 ${c.class} ${
+                          note.color === c.name
+                            ? "ring-2 ring-white ring-offset-2 ring-offset-[#18181b]"
+                            : ""
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+
+            <ConfirmDialog
+              title={note.isDeleted ? "Permanently Delete?" : "Move to Trash?"}
+              description={
+                note.isDeleted
+                  ? "This note will be permanently deleted. This action cannot be undone."
+                  : "This note will be moved to the trash bin."
+              }
+              onConfirm={handleTrashAction}
+              destructive
+            >
+              <button className="p-2 hover:bg-zinc-800/60 hover:text-red-400 rounded-lg transition-colors">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </ConfirmDialog>
+
+            <div className="w-px h-5 bg-zinc-800 mx-1" />
+
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-zinc-800/60 hover:text-zinc-200 rounded-lg transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {editor && (
+          <div className="px-8 pb-4 mb-4 border-b border-zinc-800/60 flex items-center gap-1.5 flex-wrap">
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              isActive={editor.isActive("bold")}
+              icon={Bold}
+            />
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              isActive={editor.isActive("italic")}
+              icon={Italic}
+            />
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              isActive={editor.isActive("strike")}
+              icon={Strikethrough}
+            />
+            <div className="w-px h-4 bg-zinc-800 mx-1" />
+            <ToolbarButton
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 1 }).run()
+              }
+              isActive={editor.isActive("heading", { level: 1 })}
+              icon={Heading1}
+            />
+            <ToolbarButton
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+              }
+              isActive={editor.isActive("heading", { level: 2 })}
+              icon={Heading2}
+            />
+            <div className="w-px h-4 bg-zinc-800 mx-1" />
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              isActive={editor.isActive("bulletList")}
+              icon={List}
+            />
+            <ToolbarButton
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              isActive={editor.isActive("orderedList")}
+              icon={ListOrdered}
+            />
+            <div className="w-px h-4 bg-zinc-800 mx-1" />
+            <ToolbarButton
+              onClick={() => editor.chain().focus().undo().run()}
+              isActive={false}
+              icon={Undo}
+            />
+            <ToolbarButton
+              onClick={() => editor.chain().focus().redo().run()}
+              isActive={false}
+              icon={Redo}
+            />
+          </div>
+        )}
+
+        <div className="px-8 pb-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
+          <EditorContent editor={editor} />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+-------
+store/useNoteStore.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export type NoteColor = "default" | "red" | "orange" | "yellow" | "green" | "blue" | "purple";
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string; // Stored as HTML string
+  color: NoteColor;
+  isPinned: boolean;
+  isDeleted: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+
+interface NoteState {
+  notes: Note[];
+  
+  // Core Actions
+  addNote: (title?: string, content?: string) => string; // returns the new note ID
+  updateNote: (id: string, updates: Partial<Note>) => void;
+  moveToTrash: (id: string) => void;
+  restoreFromTrash: (id: string) => void;
+  permanentlyDelete: (id: string) => void;
+  emptyTrash: () => void;
+  
+  // Quick Actions
+  togglePin: (id: string) => void;
+  changeColor: (id: string, color: NoteColor) => void;
+}
+
+export const useNoteStore = create<NoteState>()(
+  persist(
+    (set) => ({
+      notes: [],
+
+      addNote: (title = "", content = "") => {
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const newNote: Note = {
+          id,
+          title,
+          content,
+          color: "default",
+          isPinned: false,
+          isDeleted: false,
+          createdAt: now,
+          updatedAt: now,
+        };
+        set((state) => ({ notes: [newNote, ...state.notes] }));
+        return id;
+      },
+
+      updateNote: (id, updates) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id 
+              ? { ...note, ...updates, updatedAt: new Date().toISOString() } 
+              : note
+          ),
+        }));
+      },
+
+      moveToTrash: (id) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, isDeleted: true, isPinned: false } : note
+          ),
+        }));
+      },
+
+      restoreFromTrash: (id) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, isDeleted: false } : note
+          ),
+        }));
+      },
+
+      permanentlyDelete: (id) => {
+        set((state) => ({
+          notes: state.notes.filter((note) => note.id !== id),
+        }));
+      },
+
+      emptyTrash: () => {
+        set((state) => ({
+          notes: state.notes.filter((note) => !note.isDeleted),
+        }));
+      },
+
+      togglePin: (id) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, isPinned: !note.isPinned } : note
+          ),
+        }));
+      },
+
+      changeColor: (id, color) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, color, updatedAt: new Date().toISOString() } : note
+          ),
+        }));
+      },
+    }),
+    {
+      name: "pluto-notes-storage",
+    }
+  )
+);
+
+-------
+components/calendar/page.tsx
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Copy,
+  Folder,
+  RefreshCw,
+  ChevronDown,
+  Check,
+  Ban,
+} from "lucide-react";
+import {
+  useCalendarStore,
+  EventCategory,
+  RepeatOption,
+  CalendarEvent,
+} from "@/store/useCalendarStore";
+import { SidePanel } from "@/components/shared/SidePanel";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const formatDate = (date: Date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const getFormattedHeaderDate = (dateStr: string) => {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+// --- Repeating Event Logic ---
+const isEventOnDate = (
+  event: CalendarEvent,
+  cellDate: Date,
+  cellDateStr: string,
+) => {
+  // If the event was stopped, it should not render on any day AFTER the stopDate
+  if (event.stopDate && cellDateStr > event.stopDate) return false;
+
+  if (event.date === cellDateStr) return true;
+  if (event.repeat === "none") return false;
+
+  const [y, m, d] = event.date.split("-").map(Number);
+  const eventStartDate = new Date(y, m - 1, d);
+
+  const cDate = new Date(
+    cellDate.getFullYear(),
+    cellDate.getMonth(),
+    cellDate.getDate(),
+  ).getTime();
+  const eDate = eventStartDate.getTime();
+
+  if (cDate < eDate) return false;
+
+  switch (event.repeat) {
+    case "daily":
+      return true;
+    case "weekly":
+      return cellDate.getDay() === eventStartDate.getDay();
+    case "monthly":
+      return cellDate.getDate() === eventStartDate.getDate();
+    case "yearly":
+      return (
+        cellDate.getMonth() === eventStartDate.getMonth() &&
+        cellDate.getDate() === eventStartDate.getDate()
+      );
+    default:
+      return false;
+  }
+};
+
+const categoryColors: Record<EventCategory, string> = {
+  none: "bg-zinc-700 text-zinc-100",
+  work: "bg-purple-500 text-white",
+  personal: "bg-blue-500 text-white",
+  health: "bg-green-500 text-white",
+  finance: "bg-yellow-500 text-yellow-950",
+};
+
+const dotColors: Record<EventCategory, string> = {
+  none: "bg-transparent border-2 border-zinc-600",
+  work: "bg-purple-500 ring-4 ring-purple-500/20",
+  personal: "bg-blue-500 ring-4 ring-blue-500/20",
+  health: "bg-green-500 ring-4 ring-green-500/20",
+  finance: "bg-yellow-500 ring-4 ring-yellow-500/20",
+};
+
+export default function CalendarPage() {
+  const {
+    events,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    duplicateEvent,
+    stopEvent,
+  } = useCalendarStore();
+  const [mounted, setMounted] = useState(false);
+
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const calendarDays = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const days = [];
+
+    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+      days.push({
+        date: new Date(year, month - 1, daysInPrevMonth - i),
+        isCurrentMonth: false,
+      });
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push({ date: new Date(year, month, i), isCurrentMonth: true });
+    }
+    const remainingCells = 42 - days.length;
+    for (let i = 1; i <= remainingCells; i++) {
+      days.push({ date: new Date(year, month + 1, i), isCurrentMonth: false });
+    }
+    return days;
+  }, [currentMonth]);
+
+  const nextMonth = () =>
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1),
+    );
+  const prevMonth = () =>
+    setCurrentMonth(
+      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1),
+    );
+
+  const todayStr = formatDate(new Date());
+
+  const selectedDayEvents = useMemo(() => {
+    if (!selectedDate) return [];
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    return events.filter((e) => isEventOnDate(e, dateObj, selectedDate));
+  }, [events, selectedDate]);
+
+  const handleAddNewEvent = () => {
+    if (!selectedDate) return;
+    const newId = addEvent("New Event", selectedDate);
+    setExpandedEventId(newId);
+  };
+
+  const handleClosePanel = () => {
+    setSelectedDate(null);
+    setExpandedEventId(null);
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="flex flex-col h-full max-w-7xl mx-auto px-2 relative">
+      <div className="flex items-center justify-between mb-8 pt-2">
+        <h2 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-br from-white to-purple-500 drop-shadow-sm">
+          Calendar
+        </h2>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={prevMonth}
+            className="p-2 rounded-xl bg-[#121215] border border-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shadow-sm"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+
+          <span className="text-lg font-bold min-w-35 text-center text-zinc-100">
+            {currentMonth.toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+
+          <button
+            onClick={nextMonth}
+            className="p-2 rounded-xl bg-[#121215] border border-zinc-800/80 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors shadow-sm"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col bg-[#121215] border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+        <div className="grid grid-cols-7 border-b border-zinc-800/80">
+          {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
+            <div
+              key={day}
+              className="py-3 text-center text-xs font-bold text-zinc-500 tracking-widest border-r border-zinc-800/50 last:border-r-0"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 flex-1 auto-rows-fr">
+          {calendarDays.map((dayObj, i) => {
+            const dateStr = formatDate(dayObj.date);
+            const isToday = dateStr === todayStr;
+            const dayEvents = events.filter((e) =>
+              isEventOnDate(e, dayObj.date, dateStr),
+            );
+
+            // Limit rendered events to prevent layout stretching
+            const MAX_EVENTS = 2;
+            const displayedEvents = dayEvents.slice(0, MAX_EVENTS);
+            const hiddenCount = dayEvents.length - MAX_EVENTS;
+
+            return (
+              <div
+                key={dateStr}
+                onClick={() => setSelectedDate(dateStr)}
+                className={`relative p-2 border-r border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors cursor-pointer flex flex-col min-h-0
+                  ${i % 7 === 6 ? "border-r-0" : ""} 
+                  ${i >= 35 ? "border-b-0" : ""}
+                `}
+              >
+                <div className="flex justify-start mb-1 shrink-0">
+                  <span
+                    className={`text-sm font-semibold flex items-center justify-center h-7 w-7 rounded-full
+                    ${isToday ? "bg-purple-600 text-white shadow-md shadow-purple-900/40" : ""}
+                    ${!isToday && dayObj.isCurrentMonth ? "text-zinc-200" : ""}
+                    ${!isToday && !dayObj.isCurrentMonth ? "text-zinc-600" : ""}
+                  `}
+                  >
+                    {dayObj.date.getDate()}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1 overflow-hidden">
+                  {displayedEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded-md truncate shrink-0 ${categoryColors[event.category]}`}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
+                  {hiddenCount > 0 && (
+                    <div className="text-[10px] font-semibold text-zinc-500 pl-1 mt-0.5 shrink-0">
+                      + {hiddenCount} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <SidePanel isOpen={!!selectedDate} onClose={handleClosePanel}>
+        {selectedDate && (
+          <div className="flex flex-col h-full">
+            <div className="p-6 pb-4 border-b border-zinc-800/60 shrink-0">
+              <h3 className="text-lg font-semibold text-zinc-100">
+                {getFormattedHeaderDate(selectedDate)}
+              </h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar flex flex-col gap-4">
+              <button
+                onClick={handleAddNewEvent}
+                className="w-full py-3.5 border border-dashed border-zinc-700/80 text-zinc-400 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-800/50 hover:text-zinc-200 transition-colors hover:border-zinc-600 shrink-0"
+              >
+                <Plus className="h-4 w-4" /> Add New Event
+              </button>
+
+              <div className="flex flex-col gap-3 pb-8">
+                {selectedDayEvents.map((event) => (
+                  <EventRow
+                    key={event.id}
+                    event={event}
+                    selectedDate={selectedDate}
+                    isExpanded={expandedEventId === event.id}
+                    onToggle={() =>
+                      setExpandedEventId(
+                        expandedEventId === event.id ? null : event.id,
+                      )
+                    }
+                    updateEvent={updateEvent}
+                    duplicateEvent={duplicateEvent}
+                    deleteEvent={deleteEvent}
+                    stopEvent={stopEvent}
+                    closeExpanded={() => setExpandedEventId(null)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </SidePanel>
+    </div>
+  );
+}
+
+// --- Extracted Component ---
+interface EventRowProps {
+  event: CalendarEvent;
+  isExpanded: boolean;
+  selectedDate: string;
+  onToggle: () => void;
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
+  duplicateEvent: (id: string, newStartDate?: string) => void;
+  deleteEvent: (id: string) => void;
+  stopEvent: (id: string, stopDate: string) => void;
+  closeExpanded: () => void;
+}
+
+function EventRow({
+  event,
+  isExpanded,
+  selectedDate,
+  onToggle,
+  updateEvent,
+  duplicateEvent,
+  deleteEvent,
+  stopEvent,
+  closeExpanded,
+}: EventRowProps) {
+  // Show Stop button only if it's a repeating event being viewed on a date AFTER it was created, and hasn't been stopped yet.
+  const isRecurrentAndFuture =
+    event.repeat !== "none" && selectedDate > event.date;
+
+  return (
+    <div
+      className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isExpanded ? "bg-[#121215] border-zinc-800" : "bg-[#101012] border-transparent hover:border-zinc-800/60"}`}
+    >
+      {!isExpanded ? (
+        <div
+          onClick={onToggle}
+          className="flex items-center justify-between p-4 cursor-pointer hover:bg-zinc-900/50 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className={`w-3 h-3 rounded-full ${dotColors[event.category]}`}
+            />
+            <span
+              className={`text-sm font-medium ${event.title === "New Event" ? "text-zinc-500 italic" : "text-zinc-200"}`}
+            >
+              {event.title}
+            </span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-zinc-500" />
+        </div>
+      ) : (
+        <div className="flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-4 border-b border-zinc-800/80 flex items-center gap-4">
+            <div
+              className={`w-3 h-3 rounded-full shrink-0 ${dotColors[event.category]}`}
+            />
+            <input
+              value={event.title}
+              onChange={(e) => updateEvent(event.id, { title: e.target.value })}
+              className="w-full bg-transparent text-lg font-bold text-zinc-100 outline-none placeholder:text-zinc-700"
+              placeholder="Event Title"
+              autoFocus
+            />
+          </div>
+
+          <div className="p-4 flex flex-col gap-2">
+            <div className="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-900/50 transition-colors">
+              <div className="flex items-center gap-3 text-zinc-400">
+                <RefreshCw className="w-4 h-4" />{" "}
+                <span className="text-sm font-medium">Repeat</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-zinc-200 hover:text-white capitalize flex items-center gap-2 outline-none">
+                  {event.repeat === "none" ? "Does not repeat" : event.repeat}{" "}
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-zinc-900 border-zinc-800 rounded-xl w-48"
+                >
+                  {["none", "daily", "weekly", "monthly", "yearly"].map(
+                    (opt) => (
+                      <DropdownMenuItem
+                        key={opt}
+                        onClick={() =>
+                          updateEvent(event.id, { repeat: opt as RepeatOption })
+                        }
+                        className="cursor-pointer capitalize text-zinc-300 focus:bg-zinc-800 flex items-center justify-between"
+                      >
+                        {opt === "none" ? "Does not repeat" : opt}
+                        {event.repeat === opt && (
+                          <Check className="h-4 w-4 text-purple-500" />
+                        )}
+                      </DropdownMenuItem>
+                    ),
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-900/50 transition-colors">
+              <div className="flex items-center gap-3 text-zinc-400">
+                <Folder className="w-4 h-4" />{" "}
+                <span className="text-sm font-medium">Category</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-sm font-semibold text-zinc-200 hover:text-white capitalize flex items-center gap-2 outline-none">
+                  {event.category === "none" ? "No Category" : event.category}{" "}
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-zinc-900 border-zinc-800 rounded-xl w-48"
+                >
+                  {["none", "work", "personal", "health", "finance"].map(
+                    (cat) => (
+                      <DropdownMenuItem
+                        key={cat}
+                        onClick={() =>
+                          updateEvent(event.id, {
+                            category: cat as EventCategory,
+                          })
+                        }
+                        className="cursor-pointer capitalize text-zinc-300 focus:bg-zinc-800 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full ${dotColors[cat as EventCategory]}`}
+                          />
+                          {cat === "none" ? "No Category" : cat}
+                        </div>
+                        {event.category === cat && (
+                          <Check className="h-4 w-4 text-purple-500" />
+                        )}
+                      </DropdownMenuItem>
+                    ),
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <div className="p-3 border-t border-zinc-800/80 bg-[#09090b] flex items-center justify-between rounded-b-xl gap-2 overflow-x-auto custom-scrollbar">
+            <button
+              onClick={() => {
+                duplicateEvent(event.id, selectedDate);
+                closeExpanded();
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg flex items-center gap-2 transition-colors shrink-0"
+            >
+              <Copy className="w-3.5 h-3.5" /> Duplicate
+            </button>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {isRecurrentAndFuture && !event.stopDate && (
+                <ConfirmDialog
+                  title="Stop Recurring Event?"
+                  description="This event will stop repeating after today. Previous occurrences will remain on your calendar."
+                  onConfirm={() => {
+                    stopEvent(event.id, selectedDate);
+                    closeExpanded();
+                  }}
+                  destructive
+                >
+                  <button className="px-3 py-1.5 text-xs font-medium text-orange-400/80 hover:text-orange-400 hover:bg-orange-950/40 rounded-lg flex items-center gap-2 transition-colors">
+                    <Ban className="w-3.5 h-3.5" /> Stop
+                  </button>
+                </ConfirmDialog>
+              )}
+
+              <ConfirmDialog
+                title="Delete Event?"
+                description="Are you sure you want to remove this event from your calendar entirely?"
+                onConfirm={() => deleteEvent(event.id)}
+                destructive
+              >
+                <button className="px-3 py-1.5 text-xs font-medium text-red-400/80 hover:text-red-400 hover:bg-red-950/40 rounded-lg flex items-center gap-2 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                </button>
+              </ConfirmDialog>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+------
+store/useCalendarStore.ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export type RepeatOption = "none" | "daily" | "weekly" | "monthly" | "yearly";
+export type EventCategory = "none" | "work" | "personal" | "health" | "finance";
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string; // Stored as YYYY-MM-DD
+  repeat: RepeatOption;
+  category: EventCategory;
+  stopDate?: string; // Tracks when a recurring event was stopped
+}
+
+interface CalendarState {
+  events: CalendarEvent[];
+  
+  // Actions
+  addEvent: (title: string, date: string) => string;
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
+  deleteEvent: (id: string) => void;
+  duplicateEvent: (id: string, newStartDate?: string) => void;
+  stopEvent: (id: string, stopDate: string) => void;
+}
+
+export const useCalendarStore = create<CalendarState>()(
+  persist(
+    (set) => ({
+      events: [],
+
+      addEvent: (title, date) => {
+        const id = crypto.randomUUID();
+        const newEvent: CalendarEvent = {
+          id,
+          title,
+          date,
+          repeat: "none",
+          category: "none",
+        };
+        set((state) => ({ events: [...state.events, newEvent] }));
+        return id;
+      },
+
+      updateEvent: (id, updates) => {
+        set((state) => ({
+          events: state.events.map((event) =>
+            event.id === id ? { ...event, ...updates } : event
+          ),
+        }));
+      },
+
+      deleteEvent: (id) => {
+        set((state) => ({
+          events: state.events.filter((event) => event.id !== id),
+        }));
+      },
+
+      duplicateEvent: (id, newStartDate) => {
+        set((state) => {
+          const eventToCopy = state.events.find((e) => e.id === id);
+          if (!eventToCopy) return state;
+
+          const duplicatedEvent: CalendarEvent = {
+            ...eventToCopy,
+            id: crypto.randomUUID(),
+            date: newStartDate || eventToCopy.date, // Starts on the new date if provided
+            stopDate: undefined, // Reset stop date for the new duplicate
+          };
+          
+          return { events: [...state.events, duplicatedEvent] };
+        });
+      },
+
+      stopEvent: (id, stopDate) => {
+        set((state) => ({
+          events: state.events.map((event) =>
+            event.id === id ? { ...event, stopDate } : event
+          ),
+        }));
+      },
+    }),
+    {
+      name: "pluto-calendar-storage",
     }
   )
 );
@@ -2053,3 +3617,324 @@ export {
   SheetTitle,
   SheetDescription,
 }
+-------
+components/ui/dialog.tsx
+"use client"
+
+import * as React from "react"
+import { Dialog as DialogPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { XIcon } from "lucide-react"
+
+function Dialog({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+}
+
+function DialogTrigger({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+}
+
+function DialogPortal({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+}
+
+function DialogClose({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+}
+
+function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      data-slot="dialog-overlay"
+      className={cn(
+        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogContent({
+  className,
+  children,
+  showCloseButton = true,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  showCloseButton?: boolean
+}) {
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        data-slot="dialog-content"
+        className={cn(
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close data-slot="dialog-close" asChild>
+            <Button
+              variant="ghost"
+              className="absolute top-2 right-2"
+              size="icon-sm"
+            >
+              <XIcon
+              />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+}
+
+function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-header"
+      className={cn("flex flex-col gap-2", className)}
+      {...props}
+    />
+  )
+}
+
+function DialogFooter({
+  className,
+  showCloseButton = false,
+  children,
+  ...props
+}: React.ComponentProps<"div"> & {
+  showCloseButton?: boolean
+}) {
+  return (
+    <div
+      data-slot="dialog-footer"
+      className={cn(
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {showCloseButton && (
+        <DialogPrimitive.Close asChild>
+          <Button variant="outline">Close</Button>
+        </DialogPrimitive.Close>
+      )}
+    </div>
+  )
+}
+
+function DialogTitle({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      data-slot="dialog-title"
+      className={cn(
+        "font-heading text-base leading-none font-medium",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogDescription({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      data-slot="dialog-description"
+      className={cn(
+        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+}
+----------
+components/ui/tooltip.tsx
+"use client"
+
+import * as React from "react"
+import { Tooltip as TooltipPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+
+function TooltipProvider({
+  delayDuration = 0,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+  return (
+    <TooltipPrimitive.Provider
+      data-slot="tooltip-provider"
+      delayDuration={delayDuration}
+      {...props}
+    />
+  )
+}
+
+function Tooltip({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+}
+
+function TooltipTrigger({
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}
+
+function TooltipContent({
+  className,
+  sideOffset = 0,
+  children,
+  ...props
+}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+  return (
+    <TooltipPrimitive.Portal>
+      <TooltipPrimitive.Content
+        data-slot="tooltip-content"
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 inline-flex w-fit max-w-xs origin-(--radix-tooltip-content-transform-origin) items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-xs bg-foreground fill-foreground" />
+      </TooltipPrimitive.Content>
+    </TooltipPrimitive.Portal>
+  );
+}
+
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
+--------
+components/ui/popover.tsx
+"use client"
+
+import * as React from "react"
+import { Popover as PopoverPrimitive } from "radix-ui"
+
+import { cn } from "@/lib/utils"
+
+function Popover({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+}
+
+function PopoverTrigger({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}
+
+function PopoverContent({
+  className,
+  align = "center",
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+  return (
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 flex w-72 origin-(--radix-popover-content-transform-origin) flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          className
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
+}
+
+function PopoverAnchor({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}
+
+function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="popover-header"
+      className={cn("flex flex-col gap-0.5 text-sm", className)}
+      {...props}
+    />
+  )
+}
+
+function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
+  return (
+    <div
+      data-slot="popover-title"
+      className={cn("font-medium", className)}
+      {...props}
+    />
+  )
+}
+
+function PopoverDescription({
+  className,
+  ...props
+}: React.ComponentProps<"p">) {
+  return (
+    <p
+      data-slot="popover-description"
+      className={cn("text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+export {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+}
+-----------------
