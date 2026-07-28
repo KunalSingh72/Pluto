@@ -94,6 +94,7 @@ export function NoteEditor({ noteId, isOpen, onClose }: NoteEditorProps) {
       Placeholder.configure({ placeholder: "Start writing..." }),
     ],
     content: note?.content || "",
+    immediatelyRender: false, // <-- Add this line to silence the warning
     onUpdate: ({ editor }) => {
       if (noteId) updateNote(noteId, { content: editor.getHTML() });
     },

@@ -98,7 +98,7 @@ export const useTaskStore = create<TaskState>()(
       restoreFromTrash: (id) => {
         set((state) => ({
           tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, isDeleted: false, date: getTodayString() } : task
+            task.id === id ? { ...task, isDeleted: false } : task
           ),
         }));
       },

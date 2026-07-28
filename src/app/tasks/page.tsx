@@ -28,6 +28,7 @@ import { useTaskStore, Task, Priority } from "@/store/useTaskStore";
 
 type Tab = "today" | "overdue" | "trash";
 
+// --- Extracted Helper Functions ---
 const formatTaskDate = (dateStr: string) => {
   const today = new Date().toISOString().split("T")[0];
   if (dateStr === today) return "Today";
@@ -39,6 +40,19 @@ const formatTaskDate = (dateStr: string) => {
 
   if (diffDays === 1) return "Yesterday";
   return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+};
+
+const getPriorityColor = (priority: Priority) => {
+  switch (priority) {
+    case "high":
+      return "text-red-500 fill-red-500";
+    case "medium":
+      return "text-yellow-500 fill-yellow-500";
+    case "low":
+      return "text-green-500 fill-green-500";
+    default:
+      return "text-zinc-600";
+  }
 };
 
 export default function TasksPage() {
@@ -123,19 +137,6 @@ export default function TasksPage() {
     setInputValue("");
   };
 
-  const getPriorityColor = (priority: Priority) => {
-    switch (priority) {
-      case "high":
-        return "text-red-500 fill-red-500";
-      case "medium":
-        return "text-yellow-500 fill-yellow-500";
-      case "low":
-        return "text-green-500 fill-green-500";
-      default:
-        return "text-zinc-600"; 
-    }
-  };
-
   if (!mounted) return null;
 
   return (
@@ -207,6 +208,7 @@ export default function TasksPage() {
           <Trash2 className="h-4 w-4" /> Trash Bin
         </button>
       </div>
+
       {/* Main Task Area */}
       <div className="flex-1 flex flex-col pt-2">
         {/* Input Bar (Only show on Today tab) */}
@@ -230,7 +232,7 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Bulk Actions for Active Tasks (Spaced to corners of max-w-2xl) */}
+        {/* Bulk Actions for Active Tasks */}
         {activeTab !== "trash" && filteredTasks.length > 0 && (
           <div className="flex justify-between items-center w-full max-w-2xl mb-4 px-1">
             <button
@@ -273,7 +275,7 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Task List Rendering (Aligned to max-w-2xl) */}
+        {/* Task List Rendering */}
         <div className="flex-1 overflow-y-auto pb-20 pr-4 flex flex-col gap-2 w-full max-w-2xl">
           {filteredTasks.length === 0 ? (
             <div className="text-center py-16 text-zinc-500 text-sm flex flex-col items-center gap-3">
@@ -289,14 +291,32 @@ export default function TasksPage() {
                   </h3>
                   <div className="flex flex-col gap-2">
                     {dateTasks.map((task) => (
-                      <TaskRow key={task.id} task={task} />
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        activeTab={activeTab}
+                        setSelectedTaskId={setSelectedTaskId}
+                        updateTask={updateTask}
+                        restoreFromTrash={restoreFromTrash}
+                        permanentlyDelete={permanentlyDelete}
+                      />
                     ))}
                   </div>
                 </div>
               ),
             )
           ) : (
-            filteredTasks.map((task) => <TaskRow key={task.id} task={task} />)
+            filteredTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                activeTab={activeTab}
+                setSelectedTaskId={setSelectedTaskId}
+                updateTask={updateTask}
+                restoreFromTrash={restoreFromTrash}
+                permanentlyDelete={permanentlyDelete}
+              />
+            ))
           )}
         </div>
       </div>
@@ -309,7 +329,6 @@ export default function TasksPage() {
       >
         {activeTask && (
           <div className="flex flex-col h-full">
-            {/* Custom Header replicating the old SheetHeader */}
             <div className="p-6 border-b border-zinc-800/60 flex items-start gap-4 shrink-0">
               <Checkbox
                 checked={activeTask.completed}
@@ -463,104 +482,119 @@ export default function TasksPage() {
       </SidePanel>
     </div>
   );
+}
 
-  // --- Inline Component for Task Rows (Using Solid Colors) ---
-  function TaskRow({ task }: { task: Task }) {
-    return (
-      <div
-        onClick={() => activeTab !== "trash" && setSelectedTaskId(task.id)}
-        className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-          task.completed
-            ? "bg-[#121215] border-zinc-800/60 hover:bg-[#18181b] hover:border-zinc-700"
-            : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
-        }`}
-      >
-        <div className="flex items-center gap-4 flex-1 overflow-hidden">
-          <Checkbox
-            checked={task.completed}
-            onCheckedChange={(checked) =>
-              updateTask(task.id, { completed: !!checked })
-            }
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-          />
-          <div className="flex flex-col">
-            <span
-              className={`text-sm truncate transition-all duration-200 ${
-                task.completed ? "text-zinc-500 line-through" : "text-zinc-200"
-              }`}
-            >
-              {task.title}
-            </span>
-            {task.subtasks.length > 0 && (
-              <span
-                className={`text-xs mt-0.5 transition-colors ${task.completed ? "text-zinc-600" : "text-zinc-500"}`}
-              >
-                {task.subtasks.filter((s) => s.completed).length}/
-                {task.subtasks.length} subtasks
-              </span>
-            )}
-          </div>
-        </div>
+// --- Extracted Component for Task Rows ---
+// Extracted outside to prevent re-render flickering when input states change in the parent
+interface TaskRowProps {
+  task: Task;
+  activeTab: Tab;
+  setSelectedTaskId: (id: string | null) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  restoreFromTrash: (id: string) => void;
+  permanentlyDelete: (id: string) => void;
+}
 
-        <div
-          className="flex items-center gap-3"
+function TaskRow({
+  task,
+  activeTab,
+  setSelectedTaskId,
+  updateTask,
+  restoreFromTrash,
+  permanentlyDelete,
+}: TaskRowProps) {
+  return (
+    <div
+      onClick={() => activeTab !== "trash" && setSelectedTaskId(task.id)}
+      className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
+        task.completed
+          ? "bg-[#121215] border-zinc-800/60 hover:bg-[#18181b] hover:border-zinc-700"
+          : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
+      }`}
+    >
+      <div className="flex items-center gap-4 flex-1 overflow-hidden">
+        <Checkbox
+          checked={task.completed}
+          onCheckedChange={(checked) =>
+            updateTask(task.id, { completed: !!checked })
+          }
           onClick={(e) => e.stopPropagation()}
-        >
-          {activeTab === "trash" ? (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => restoreFromTrash(task.id)}
-                className="h-8 px-2 text-zinc-400 hover:text-green-400"
-              >
-                Restore
-              </Button>
-              <ConfirmDialog
-                title="Permanently Delete?"
-                description="This task will be deleted forever. This action cannot be undone."
-                onConfirm={() => permanentlyDelete(task.id)}
-              >
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 px-2 text-zinc-400 hover:text-red-400"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </ConfirmDialog>
-            </>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-zinc-700/50 outline-none transition-colors">
-                <Flag
-                  className={`h-4 w-4 ${getPriorityColor(task.priority)}`}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-zinc-900 border-zinc-800 rounded-xl min-w-30"
-              >
-                {["none", "low", "medium", "high"].map((level) => (
-                  <DropdownMenuItem
-                    key={level}
-                    onClick={() =>
-                      updateTask(task.id, { priority: level as Priority })
-                    }
-                    className="capitalize cursor-pointer focus:bg-zinc-800 text-zinc-300"
-                  >
-                    <Flag
-                      className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
-                    />{" "}
-                    {level}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          className="h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+        />
+        <div className="flex flex-col">
+          <span
+            className={`text-sm truncate transition-all duration-200 ${
+              task.completed ? "text-zinc-500 line-through" : "text-zinc-200"
+            }`}
+          >
+            {task.title}
+          </span>
+          {task.subtasks.length > 0 && (
+            <span
+              className={`text-xs mt-0.5 transition-colors ${task.completed ? "text-zinc-600" : "text-zinc-500"}`}
+            >
+              {task.subtasks.filter((s) => s.completed).length}/
+              {task.subtasks.length} subtasks
+            </span>
           )}
         </div>
       </div>
-    );
-  }
+
+      <div
+        className="flex items-center gap-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {activeTab === "trash" ? (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => restoreFromTrash(task.id)}
+              className="h-8 px-2 text-zinc-400 hover:text-green-400"
+            >
+              Restore
+            </Button>
+            <ConfirmDialog
+              title="Permanently Delete?"
+              description="This task will be deleted forever. This action cannot be undone."
+              onConfirm={() => permanentlyDelete(task.id)}
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-zinc-400 hover:text-red-400"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </ConfirmDialog>
+          </>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-zinc-700/50 outline-none transition-colors">
+              <Flag className={`h-4 w-4 ${getPriorityColor(task.priority)}`} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-zinc-900 border-zinc-800 rounded-xl min-w-30"
+            >
+              {["none", "low", "medium", "high"].map((level) => (
+                <DropdownMenuItem
+                  key={level}
+                  onClick={() =>
+                    updateTask(task.id, { priority: level as Priority })
+                  }
+                  className="capitalize cursor-pointer focus:bg-zinc-800 text-zinc-300"
+                >
+                  <Flag
+                    className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
+                  />{" "}
+                  {level}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </div>
+  );
 }

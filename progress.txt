@@ -2340,7 +2340,7 @@ export const useNoteStore = create<NoteState>()(
 );
 
 -------
-components/calendar/page.tsx
+app/calendar/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
