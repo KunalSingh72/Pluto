@@ -44,12 +44,11 @@ const getFormattedHeaderDate = (dateStr: string) => {
     day: "numeric",
   });
 };
-
 // --- Repeating Event Logic ---
 const isEventOnDate = (
   event: CalendarEvent,
   cellDate: Date,
-  cellDateStr: string,
+  cellDateStr: string
 ) => {
   // If the event was stopped, it should not render on any day AFTER the stopDate
   if (event.stopDate && cellDateStr > event.stopDate) return false;
@@ -63,11 +62,23 @@ const isEventOnDate = (
   const cDate = new Date(
     cellDate.getFullYear(),
     cellDate.getMonth(),
-    cellDate.getDate(),
+    cellDate.getDate()
   ).getTime();
-  const eDate = eventStartDate.getTime();
+  const eDate = new Date(
+    eventStartDate.getFullYear(),
+    eventStartDate.getMonth(),
+    eventStartDate.getDate()
+  ).getTime();
 
   if (cDate < eDate) return false;
+
+  const targetDay = eventStartDate.getDate();
+  const cellDay = cellDate.getDate();
+  const daysInCellMonth = new Date(
+    cellDate.getFullYear(),
+    cellDate.getMonth() + 1,
+    0
+  ).getDate();
 
   switch (event.repeat) {
     case "daily":
@@ -75,17 +86,21 @@ const isEventOnDate = (
     case "weekly":
       return cellDate.getDay() === eventStartDate.getDay();
     case "monthly":
-      return cellDate.getDate() === eventStartDate.getDate();
+      // Handle edge days (e.g., event set on 31st rendered in February)
+      if (targetDay > daysInCellMonth) {
+        return cellDay === daysInCellMonth;
+      }
+      return cellDay === targetDay;
     case "yearly":
-      return (
-        cellDate.getMonth() === eventStartDate.getMonth() &&
-        cellDate.getDate() === eventStartDate.getDate()
-      );
+      if (cellDate.getMonth() !== eventStartDate.getMonth()) return false;
+      if (targetDay > daysInCellMonth) {
+        return cellDay === daysInCellMonth;
+      }
+      return cellDay === targetDay;
     default:
       return false;
   }
 };
-
 const categoryColors: Record<EventCategory, string> = {
   none: "bg-zinc-700 text-zinc-100",
   work: "bg-purple-500 text-white",

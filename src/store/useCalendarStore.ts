@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
 export type RepeatOption = "none" | "daily" | "weekly" | "monthly" | "yearly";
 export type EventCategory = "none" | "work" | "personal" | "health" | "finance";
 
@@ -79,9 +79,10 @@ export const useCalendarStore = create<CalendarState>()(
           ),
         }));
       },
-    }),
+   }),
     {
       name: "pluto-calendar-storage",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );

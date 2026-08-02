@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
+import { getLocalDateString } from "@/lib/utils";
 
 export type Priority = "none" | "low" | "medium" | "high";
 
@@ -41,13 +43,11 @@ interface TaskState {
   processDayEnd: () => void;
 }
 
-const getTodayString = () => new Date().toISOString().split("T")[0];
-
 export const useTaskStore = create<TaskState>()(
   persist(
     (set) => ({
       tasks: [],
-      lastAccessedDate: getTodayString(),
+      lastAccessedDate: getLocalDateString(),
 
       addTask: (title) => {
         const newTask: Task = {
@@ -56,7 +56,7 @@ export const useTaskStore = create<TaskState>()(
           completed: false,
           priority: "none",
           subtasks: [],
-          date: getTodayString(),
+          date: getLocalDateString(),
           isDeleted: false,
         };
         set((state) => ({ tasks: [newTask, ...state.tasks] }));
@@ -79,7 +79,7 @@ export const useTaskStore = create<TaskState>()(
             ...taskToCopy,
             id: crypto.randomUUID(),
             title: `${taskToCopy.title} (Copy)`,
-            date: getTodayString(), // Duplicates are added to "Today"
+            date: getLocalDateString(), // Duplicates are added to "Today"
             subtasks: taskToCopy.subtasks.map(st => ({ ...st, id: crypto.randomUUID() }))
           };
           
@@ -153,15 +153,13 @@ export const useTaskStore = create<TaskState>()(
         }));
       },
 
-      // Simulates the end of the day cron-job logic
       processDayEnd: () => {
-        const today = getTodayString();
+        const today = getLocalDateString();
         set((state) => {
-          if (state.lastAccessedDate === today) return state; // Day hasn't changed
+          if (state.lastAccessedDate === today) return state;
 
           const updatedTasks = state.tasks.filter((task) => {
-            if (task.isDeleted) return true; // Keep trash as is
-            // If it's completed and from a previous day, remove it entirely
+            if (task.isDeleted) return true;
             if (task.completed && task.date !== today) return false;
             return true;
           });
@@ -175,6 +173,7 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: "pluto-tasks-storage",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );

@@ -466,7 +466,71 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Returns YYYY-MM-DD in the local user timezone instead of UTC ISO string.
+ */
+export function getLocalDateString(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 ----------
+lib/idbStorage.ts
+import { StateStorage } from "zustand/middleware";
+
+const DB_NAME = "PlutoWorkspaceDB";
+const STORE_NAME = "keyval";
+
+const getDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return;
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(STORE_NAME);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+export const idbStorage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    if (typeof window === "undefined") return null;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readonly");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(name);
+      request.onsuccess = () => resolve(request.result ?? null);
+      request.onerror = () => reject(request.error);
+    });
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    if (typeof window === "undefined") return;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(value, name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  },
+  removeItem: async (name: string): Promise<void> => {
+    if (typeof window === "undefined") return;
+    const db = await getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  },
+};
+-------------
 store/useUIStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -666,6 +730,7 @@ import { useTaskStore, Task, Priority } from "@/store/useTaskStore";
 
 type Tab = "today" | "overdue" | "trash";
 
+// --- Extracted Helper Functions ---
 const formatTaskDate = (dateStr: string) => {
   const today = new Date().toISOString().split("T")[0];
   if (dateStr === today) return "Today";
@@ -677,6 +742,19 @@ const formatTaskDate = (dateStr: string) => {
 
   if (diffDays === 1) return "Yesterday";
   return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+};
+
+const getPriorityColor = (priority: Priority) => {
+  switch (priority) {
+    case "high":
+      return "text-red-500 fill-red-500";
+    case "medium":
+      return "text-yellow-500 fill-yellow-500";
+    case "low":
+      return "text-green-500 fill-green-500";
+    default:
+      return "text-zinc-600";
+  }
 };
 
 export default function TasksPage() {
@@ -761,19 +839,6 @@ export default function TasksPage() {
     setInputValue("");
   };
 
-  const getPriorityColor = (priority: Priority) => {
-    switch (priority) {
-      case "high":
-        return "text-red-500 fill-red-500";
-      case "medium":
-        return "text-yellow-500 fill-yellow-500";
-      case "low":
-        return "text-green-500 fill-green-500";
-      default:
-        return "text-zinc-600"; 
-    }
-  };
-
   if (!mounted) return null;
 
   return (
@@ -845,6 +910,7 @@ export default function TasksPage() {
           <Trash2 className="h-4 w-4" /> Trash Bin
         </button>
       </div>
+
       {/* Main Task Area */}
       <div className="flex-1 flex flex-col pt-2">
         {/* Input Bar (Only show on Today tab) */}
@@ -868,7 +934,7 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Bulk Actions for Active Tasks (Spaced to corners of max-w-2xl) */}
+        {/* Bulk Actions for Active Tasks */}
         {activeTab !== "trash" && filteredTasks.length > 0 && (
           <div className="flex justify-between items-center w-full max-w-2xl mb-4 px-1">
             <button
@@ -911,7 +977,7 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Task List Rendering (Aligned to max-w-2xl) */}
+        {/* Task List Rendering */}
         <div className="flex-1 overflow-y-auto pb-20 pr-4 flex flex-col gap-2 w-full max-w-2xl">
           {filteredTasks.length === 0 ? (
             <div className="text-center py-16 text-zinc-500 text-sm flex flex-col items-center gap-3">
@@ -927,14 +993,32 @@ export default function TasksPage() {
                   </h3>
                   <div className="flex flex-col gap-2">
                     {dateTasks.map((task) => (
-                      <TaskRow key={task.id} task={task} />
+                      <TaskRow
+                        key={task.id}
+                        task={task}
+                        activeTab={activeTab}
+                        setSelectedTaskId={setSelectedTaskId}
+                        updateTask={updateTask}
+                        restoreFromTrash={restoreFromTrash}
+                        permanentlyDelete={permanentlyDelete}
+                      />
                     ))}
                   </div>
                 </div>
               ),
             )
           ) : (
-            filteredTasks.map((task) => <TaskRow key={task.id} task={task} />)
+            filteredTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                activeTab={activeTab}
+                setSelectedTaskId={setSelectedTaskId}
+                updateTask={updateTask}
+                restoreFromTrash={restoreFromTrash}
+                permanentlyDelete={permanentlyDelete}
+              />
+            ))
           )}
         </div>
       </div>
@@ -947,7 +1031,6 @@ export default function TasksPage() {
       >
         {activeTask && (
           <div className="flex flex-col h-full">
-            {/* Custom Header replicating the old SheetHeader */}
             <div className="p-6 border-b border-zinc-800/60 flex items-start gap-4 shrink-0">
               <Checkbox
                 checked={activeTask.completed}
@@ -1101,106 +1184,121 @@ export default function TasksPage() {
       </SidePanel>
     </div>
   );
+}
 
-  // --- Inline Component for Task Rows (Using Solid Colors) ---
-  function TaskRow({ task }: { task: Task }) {
-    return (
-      <div
-        onClick={() => activeTab !== "trash" && setSelectedTaskId(task.id)}
-        className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-          task.completed
-            ? "bg-[#121215] border-zinc-800/60 hover:bg-[#18181b] hover:border-zinc-700"
-            : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
-        }`}
-      >
-        <div className="flex items-center gap-4 flex-1 overflow-hidden">
-          <Checkbox
-            checked={task.completed}
-            onCheckedChange={(checked) =>
-              updateTask(task.id, { completed: !!checked })
-            }
-            onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-          />
-          <div className="flex flex-col">
-            <span
-              className={`text-sm truncate transition-all duration-200 ${
-                task.completed ? "text-zinc-500 line-through" : "text-zinc-200"
-              }`}
-            >
-              {task.title}
-            </span>
-            {task.subtasks.length > 0 && (
-              <span
-                className={`text-xs mt-0.5 transition-colors ${task.completed ? "text-zinc-600" : "text-zinc-500"}`}
-              >
-                {task.subtasks.filter((s) => s.completed).length}/
-                {task.subtasks.length} subtasks
-              </span>
-            )}
-          </div>
-        </div>
+// --- Extracted Component for Task Rows ---
+// Extracted outside to prevent re-render flickering when input states change in the parent
+interface TaskRowProps {
+  task: Task;
+  activeTab: Tab;
+  setSelectedTaskId: (id: string | null) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  restoreFromTrash: (id: string) => void;
+  permanentlyDelete: (id: string) => void;
+}
 
-        <div
-          className="flex items-center gap-3"
+function TaskRow({
+  task,
+  activeTab,
+  setSelectedTaskId,
+  updateTask,
+  restoreFromTrash,
+  permanentlyDelete,
+}: TaskRowProps) {
+  return (
+    <div
+      onClick={() => activeTab !== "trash" && setSelectedTaskId(task.id)}
+      className={`group flex items-center justify-between p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
+        task.completed
+          ? "bg-[#121215] border-zinc-800/60 hover:bg-[#18181b] hover:border-zinc-700"
+          : "bg-zinc-900 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
+      }`}
+    >
+      <div className="flex items-center gap-4 flex-1 overflow-hidden">
+        <Checkbox
+          checked={task.completed}
+          onCheckedChange={(checked) =>
+            updateTask(task.id, { completed: !!checked })
+          }
           onClick={(e) => e.stopPropagation()}
-        >
-          {activeTab === "trash" ? (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => restoreFromTrash(task.id)}
-                className="h-8 px-2 text-zinc-400 hover:text-green-400"
-              >
-                Restore
-              </Button>
-              <ConfirmDialog
-                title="Permanently Delete?"
-                description="This task will be deleted forever. This action cannot be undone."
-                onConfirm={() => permanentlyDelete(task.id)}
-              >
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 px-2 text-zinc-400 hover:text-red-400"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </ConfirmDialog>
-            </>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-zinc-700/50 outline-none transition-colors">
-                <Flag
-                  className={`h-4 w-4 ${getPriorityColor(task.priority)}`}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-zinc-900 border-zinc-800 rounded-xl min-w-30"
-              >
-                {["none", "low", "medium", "high"].map((level) => (
-                  <DropdownMenuItem
-                    key={level}
-                    onClick={() =>
-                      updateTask(task.id, { priority: level as Priority })
-                    }
-                    className="capitalize cursor-pointer focus:bg-zinc-800 text-zinc-300"
-                  >
-                    <Flag
-                      className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
-                    />{" "}
-                    {level}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          className="h-5 w-5 rounded-md border-zinc-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+        />
+        <div className="flex flex-col">
+          <span
+            className={`text-sm truncate transition-all duration-200 ${
+              task.completed ? "text-zinc-500 line-through" : "text-zinc-200"
+            }`}
+          >
+            {task.title}
+          </span>
+          {task.subtasks.length > 0 && (
+            <span
+              className={`text-xs mt-0.5 transition-colors ${task.completed ? "text-zinc-600" : "text-zinc-500"}`}
+            >
+              {task.subtasks.filter((s) => s.completed).length}/
+              {task.subtasks.length} subtasks
+            </span>
           )}
         </div>
       </div>
-    );
-  }
+
+      <div
+        className="flex items-center gap-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {activeTab === "trash" ? (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => restoreFromTrash(task.id)}
+              className="h-8 px-2 text-zinc-400 hover:text-green-400"
+            >
+              Restore
+            </Button>
+            <ConfirmDialog
+              title="Permanently Delete?"
+              description="This task will be deleted forever. This action cannot be undone."
+              onConfirm={() => permanentlyDelete(task.id)}
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-zinc-400 hover:text-red-400"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </ConfirmDialog>
+          </>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="p-2 rounded-lg hover:bg-zinc-700/50 outline-none transition-colors">
+              <Flag className={`h-4 w-4 ${getPriorityColor(task.priority)}`} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-zinc-900 border-zinc-800 rounded-xl min-w-30"
+            >
+              {["none", "low", "medium", "high"].map((level) => (
+                <DropdownMenuItem
+                  key={level}
+                  onClick={() =>
+                    updateTask(task.id, { priority: level as Priority })
+                  }
+                  className="capitalize cursor-pointer focus:bg-zinc-800 text-zinc-300"
+                >
+                  <Flag
+                    className={`h-3.5 w-3.5 mr-2 ${getPriorityColor(level as Priority)}`}
+                  />{" "}
+                  {level}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </div>
+  );
 }
 -------------
 components/shared/SidePanel.tsx
@@ -1310,7 +1408,9 @@ export function ConfirmDialog({
 --------
 store/useTaskStore.ts 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
+import { getLocalDateString } from "@/lib/utils";
 
 export type Priority = "none" | "low" | "medium" | "high";
 
@@ -1352,13 +1452,11 @@ interface TaskState {
   processDayEnd: () => void;
 }
 
-const getTodayString = () => new Date().toISOString().split("T")[0];
-
 export const useTaskStore = create<TaskState>()(
   persist(
     (set) => ({
       tasks: [],
-      lastAccessedDate: getTodayString(),
+      lastAccessedDate: getLocalDateString(),
 
       addTask: (title) => {
         const newTask: Task = {
@@ -1367,7 +1465,7 @@ export const useTaskStore = create<TaskState>()(
           completed: false,
           priority: "none",
           subtasks: [],
-          date: getTodayString(),
+          date: getLocalDateString(),
           isDeleted: false,
         };
         set((state) => ({ tasks: [newTask, ...state.tasks] }));
@@ -1390,7 +1488,7 @@ export const useTaskStore = create<TaskState>()(
             ...taskToCopy,
             id: crypto.randomUUID(),
             title: `${taskToCopy.title} (Copy)`,
-            date: getTodayString(), // Duplicates are added to "Today"
+            date: getLocalDateString(), // Duplicates are added to "Today"
             subtasks: taskToCopy.subtasks.map(st => ({ ...st, id: crypto.randomUUID() }))
           };
           
@@ -1409,7 +1507,7 @@ export const useTaskStore = create<TaskState>()(
       restoreFromTrash: (id) => {
         set((state) => ({
           tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, isDeleted: false, date: getTodayString() } : task
+            task.id === id ? { ...task, isDeleted: false } : task
           ),
         }));
       },
@@ -1464,15 +1562,13 @@ export const useTaskStore = create<TaskState>()(
         }));
       },
 
-      // Simulates the end of the day cron-job logic
       processDayEnd: () => {
-        const today = getTodayString();
+        const today = getLocalDateString();
         set((state) => {
-          if (state.lastAccessedDate === today) return state; // Day hasn't changed
+          if (state.lastAccessedDate === today) return state;
 
           const updatedTasks = state.tasks.filter((task) => {
-            if (task.isDeleted) return true; // Keep trash as is
-            // If it's completed and from a previous day, remove it entirely
+            if (task.isDeleted) return true;
             if (task.completed && task.date !== today) return false;
             return true;
           });
@@ -1486,6 +1582,7 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: "pluto-tasks-storage",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );
@@ -2040,6 +2137,7 @@ export function NoteEditor({ noteId, isOpen, onClose }: NoteEditorProps) {
       Placeholder.configure({ placeholder: "Start writing..." }),
     ],
     content: note?.content || "",
+    immediatelyRender: false, // <-- Add this line to silence the warning
     onUpdate: ({ editor }) => {
       if (noteId) updateNote(noteId, { content: editor.getHTML() });
     },
@@ -2226,7 +2324,8 @@ export function NoteEditor({ noteId, isOpen, onClose }: NoteEditorProps) {
 -------
 store/useNoteStore.ts
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
 
 export type NoteColor = "default" | "red" | "orange" | "yellow" | "green" | "blue" | "purple";
 
@@ -2332,13 +2431,13 @@ export const useNoteStore = create<NoteState>()(
           ),
         }));
       },
-    }),
+   }),
     {
       name: "pluto-notes-storage",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );
-
 -------
 app/calendar/page.tsx
 "use client";
@@ -2387,12 +2486,11 @@ const getFormattedHeaderDate = (dateStr: string) => {
     day: "numeric",
   });
 };
-
 // --- Repeating Event Logic ---
 const isEventOnDate = (
   event: CalendarEvent,
   cellDate: Date,
-  cellDateStr: string,
+  cellDateStr: string
 ) => {
   // If the event was stopped, it should not render on any day AFTER the stopDate
   if (event.stopDate && cellDateStr > event.stopDate) return false;
@@ -2406,11 +2504,23 @@ const isEventOnDate = (
   const cDate = new Date(
     cellDate.getFullYear(),
     cellDate.getMonth(),
-    cellDate.getDate(),
+    cellDate.getDate()
   ).getTime();
-  const eDate = eventStartDate.getTime();
+  const eDate = new Date(
+    eventStartDate.getFullYear(),
+    eventStartDate.getMonth(),
+    eventStartDate.getDate()
+  ).getTime();
 
   if (cDate < eDate) return false;
+
+  const targetDay = eventStartDate.getDate();
+  const cellDay = cellDate.getDate();
+  const daysInCellMonth = new Date(
+    cellDate.getFullYear(),
+    cellDate.getMonth() + 1,
+    0
+  ).getDate();
 
   switch (event.repeat) {
     case "daily":
@@ -2418,17 +2528,21 @@ const isEventOnDate = (
     case "weekly":
       return cellDate.getDay() === eventStartDate.getDay();
     case "monthly":
-      return cellDate.getDate() === eventStartDate.getDate();
+      // Handle edge days (e.g., event set on 31st rendered in February)
+      if (targetDay > daysInCellMonth) {
+        return cellDay === daysInCellMonth;
+      }
+      return cellDay === targetDay;
     case "yearly":
-      return (
-        cellDate.getMonth() === eventStartDate.getMonth() &&
-        cellDate.getDate() === eventStartDate.getDate()
-      );
+      if (cellDate.getMonth() !== eventStartDate.getMonth()) return false;
+      if (targetDay > daysInCellMonth) {
+        return cellDay === daysInCellMonth;
+      }
+      return cellDay === targetDay;
     default:
       return false;
   }
 };
-
 const categoryColors: Record<EventCategory, string> = {
   none: "bg-zinc-700 text-zinc-100",
   work: "bg-purple-500 text-white",
@@ -2851,11 +2965,12 @@ function EventRow({
     </div>
   );
 }
+
 ------
 store/useCalendarStore.ts
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
 export type RepeatOption = "none" | "daily" | "weekly" | "monthly" | "yearly";
 export type EventCategory = "none" | "work" | "personal" | "health" | "finance";
 
@@ -2934,9 +3049,10 @@ export const useCalendarStore = create<CalendarState>()(
           ),
         }));
       },
-    }),
+   }),
     {
       name: "pluto-calendar-storage",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );

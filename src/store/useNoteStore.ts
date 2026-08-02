@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
 
 export type NoteColor = "default" | "red" | "orange" | "yellow" | "green" | "blue" | "purple";
 
@@ -105,9 +106,10 @@ export const useNoteStore = create<NoteState>()(
           ),
         }));
       },
-    }),
+   }),
     {
       name: "pluto-notes-storage",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );
