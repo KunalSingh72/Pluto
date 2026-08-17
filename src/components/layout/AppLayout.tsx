@@ -12,7 +12,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration mismatch by pushing the state update to the next tick
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(timer);
@@ -93,13 +92,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-dot-grid relative">
-        <header className="h-14 shrink-0 border-b border-zinc-800/60 flex items-center px-6 bg-[#09090b]/80 backdrop-blur-md z-40">
-          <h1 className="text-sm font-medium text-zinc-300 capitalize">
-            {pathname.split("/")[1] || "Dashboard"}
-          </h1>
-        </header>
         <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </main>
+
+      {/* Right Sidebar Portal Target */}
+      <div
+        id="right-sidebar-root"
+        className="h-full z-40 shrink-0 flex flex-col bg-[#09090b]"
+      />
     </div>
   );
 }

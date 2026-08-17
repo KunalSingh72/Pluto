@@ -87,15 +87,14 @@ export default function TasksPage() {
     return () => clearTimeout(timer);
   }, [processDayEnd]);
 
-  // Derived filtered tasks for active view
   const filteredTasks = useMemo(() => {
     if (activeTab === "trash") return tasks.filter((t) => t.isDeleted);
 
     return tasks.filter((t) => {
       if (t.isDeleted) return false;
       if (activeTab === "today") return t.date === todayString;
-      if (activeTab === "overdue")
-        return t.date !== todayString && !t.completed;
+      if (activeTab === "overdue") return t.date !== todayString;
+
       return false;
     });
   }, [tasks, activeTab, todayString]);
@@ -386,9 +385,46 @@ export default function TasksPage() {
               </div>
 
               <div className="mb-8">
-                <h4 className="text-sm font-medium text-zinc-400 mb-4">
-                  Subtasks
-                </h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-medium text-zinc-400">
+                    Subtasks
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-medium transition-colors ${
+                        activeTask.subtasks.length === 0
+                          ? "text-zinc-600"
+                          : "text-zinc-400"
+                      }`}
+                    >
+                      Auto-complete
+                    </span>
+                    <button
+                      onClick={() =>
+                        updateTask(activeTask.id, {
+                          autoCompleteOnSubtasks:
+                            !activeTask.autoCompleteOnSubtasks,
+                        })
+                      }
+                      disabled={activeTask.subtasks.length === 0}
+                      className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] disabled:cursor-not-allowed disabled:opacity-50 ${
+                        activeTask.autoCompleteOnSubtasks
+                          ? "bg-purple-600"
+                          : "bg-zinc-700"
+                      }`}
+                      role="switch"
+                      aria-checked={!!activeTask.autoCompleteOnSubtasks}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-3 w-3 rounded-full bg-white shadow-sm ring-0 transition-transform ${
+                          activeTask.autoCompleteOnSubtasks
+                            ? "translate-x-4"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-col gap-2">
                   {activeTask.subtasks.map((subtask) => (
                     <div

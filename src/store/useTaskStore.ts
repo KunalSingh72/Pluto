@@ -19,6 +19,7 @@ export interface Task {
   subtasks: Subtask[];
   date: string; // Stored as YYYY-MM-DD
   isDeleted: boolean; // For the Trash bin
+  autoCompleteOnSubtasks?: boolean; // Controls automatic completion based on subtasks
 }
 
 interface TaskState {
@@ -58,15 +59,27 @@ export const useTaskStore = create<TaskState>()(
           subtasks: [],
           date: getLocalDateString(),
           isDeleted: false,
+          autoCompleteOnSubtasks: false,
         };
         set((state) => ({ tasks: [newTask, ...state.tasks] }));
       },
 
       updateTask: (id, updates) => {
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === id ? { ...task, ...updates } : task
-          ),
+          tasks: state.tasks.map((task) => {
+            if (task.id !== id) return task;
+            
+            const updatedTask = { ...task, ...updates };
+            
+            // If auto-complete is explicitly toggled, evaluate it immediately
+            if (updates.autoCompleteOnSubtasks !== undefined) {
+              if (updatedTask.autoCompleteOnSubtasks && updatedTask.subtasks.length > 0) {
+                updatedTask.completed = updatedTask.subtasks.every(st => st.completed);
+              }
+            }
+            
+            return updatedTask;
+          }),
         }));
       },
 
@@ -80,7 +93,8 @@ export const useTaskStore = create<TaskState>()(
             id: crypto.randomUUID(),
             title: `${taskToCopy.title} (Copy)`,
             date: getLocalDateString(), // Duplicates are added to "Today"
-            subtasks: taskToCopy.subtasks.map(st => ({ ...st, id: crypto.randomUUID() }))
+            completed: false, // Fix: Reset parent completion status
+            subtasks: taskToCopy.subtasks.map(st => ({ ...st, id: crypto.randomUUID(), completed: false })) // Fix: Reset subtask completion status
           };
           
           return { tasks: [duplicatedTask, ...state.tasks] };
@@ -119,10 +133,16 @@ export const useTaskStore = create<TaskState>()(
         set((state) => ({
           tasks: state.tasks.map((task) => {
             if (task.id !== taskId) return task;
-            return {
-              ...task,
-              subtasks: [...task.subtasks, { id: crypto.randomUUID(), title, completed: false }],
-            };
+            
+            const newSubtasks = [...task.subtasks, { id: crypto.randomUUID(), title, completed: false }];
+            const updatedTask = { ...task, subtasks: newSubtasks };
+            
+            // Adding an uncompleted subtask uncompletes the parent if auto-complete is active
+            if (updatedTask.autoCompleteOnSubtasks) {
+              updatedTask.completed = false;
+            }
+            
+            return updatedTask;
           }),
         }));
       },
@@ -131,12 +151,18 @@ export const useTaskStore = create<TaskState>()(
         set((state) => ({
           tasks: state.tasks.map((task) => {
             if (task.id !== taskId) return task;
-            return {
-              ...task,
-              subtasks: task.subtasks.map((st) =>
-                st.id === subtaskId ? { ...st, ...updates } : st
-              ),
-            };
+            
+            const newSubtasks = task.subtasks.map((st) =>
+              st.id === subtaskId ? { ...st, ...updates } : st
+            );
+            const updatedTask = { ...task, subtasks: newSubtasks };
+            
+            // Evaluate parent auto-completion
+            if (updatedTask.autoCompleteOnSubtasks && newSubtasks.length > 0) {
+              updatedTask.completed = newSubtasks.every(st => st.completed);
+            }
+            
+            return updatedTask;
           }),
         }));
       },
@@ -145,10 +171,16 @@ export const useTaskStore = create<TaskState>()(
         set((state) => ({
           tasks: state.tasks.map((task) => {
             if (task.id !== taskId) return task;
-            return {
-              ...task,
-              subtasks: task.subtasks.filter((st) => st.id !== subtaskId),
-            };
+            
+            const newSubtasks = task.subtasks.filter((st) => st.id !== subtaskId);
+            const updatedTask = { ...task, subtasks: newSubtasks };
+            
+            // Evaluate parent auto-completion
+            if (updatedTask.autoCompleteOnSubtasks && newSubtasks.length > 0) {
+              updatedTask.completed = newSubtasks.every(st => st.completed);
+            }
+            
+            return updatedTask;
           }),
         }));
       },
