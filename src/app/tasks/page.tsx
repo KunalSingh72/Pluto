@@ -25,12 +25,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidePanel } from "@/components/shared/SidePanel";
 import { useTaskStore, Task, Priority } from "@/store/useTaskStore";
+import { getLocalDateString } from "@/lib/utils";
 
 type Tab = "today" | "overdue" | "trash";
 
 // --- Extracted Helper Functions ---
 const formatTaskDate = (dateStr: string) => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
   if (dateStr === today) return "Today";
 
   const date = new Date(dateStr);
@@ -79,7 +80,7 @@ export default function TasksPage() {
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
 
   const activeTask = tasks.find((t) => t.id === selectedTaskId);
-  const todayString = new Date().toISOString().split("T")[0];
+  const todayString = getLocalDateString();
 
   useEffect(() => {
     processDayEnd();
@@ -93,7 +94,7 @@ export default function TasksPage() {
     return tasks.filter((t) => {
       if (t.isDeleted) return false;
       if (activeTab === "today") return t.date === todayString;
-      if (activeTab === "overdue") return t.date !== todayString;
+      if (activeTab === "overdue") return t.date !== todayString && !t.completed;
 
       return false;
     });

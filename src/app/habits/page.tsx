@@ -36,7 +36,10 @@ const ProgressRing = ({ percentage, colorClass, isSelected }: { percentage: numb
   if (colorClass.includes("purple")) strokeColor = "#a855f7";
 
   return (
-    <svg className="w-12 h-12 -rotate-90 transform absolute inset-0 m-auto pointer-events-none">
+    <svg 
+      viewBox="0 0 48 48" 
+      className="w-full h-full -rotate-90 transform absolute inset-0 pointer-events-none"
+    >
       <circle
         className={`transition-colors ${isSelected ? "stroke-zinc-800" : "stroke-zinc-800/50"}`}
         strokeWidth="3"
@@ -198,7 +201,7 @@ export default function HabitsPage() {
         <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
           
           {/* 7-Day Navigation */}
-          <div className="flex items-center justify-center gap-2 sm:gap-6 px-4">
+          <div className="flex items-center justify-between w-full mt-2">
             {navDays.map(dateStr => {
               const d = new Date(dateStr);
               const dayName = d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
@@ -212,16 +215,18 @@ export default function HabitsPage() {
                 <div 
                   key={dateStr}
                   onClick={() => setSelectedDate(dateStr)}
-                  className="flex flex-col items-center gap-2 cursor-pointer group"
+                  className="flex flex-col items-center gap-2 cursor-pointer group flex-1"
                 >
-                  <span className={`text-[10px] font-bold tracking-wider ${isSelected ? "text-purple-400" : "text-zinc-500 group-hover:text-zinc-400"}`}>
+                  <span className={`text-xs font-bold tracking-wider transition-colors ${isSelected ? "text-purple-400" : "text-zinc-500 group-hover:text-zinc-400"}`}>
                     {isToday ? "TODAY" : dayName}
                   </span>
                   
-                  <div className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                    isSelected ? "bg-zinc-900" : "bg-transparent hover:bg-zinc-900/50"
+                  <div className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isSelected 
+                      ? "bg-[#16161a] border border-purple-500/30 shadow-[0_0_20px_rgba(168,85,247,0.15)] scale-105" 
+                      : "bg-transparent hover:bg-zinc-900/60"
                   }`}>
-                    <span className={`text-sm font-bold z-10 ${isSelected ? "text-zinc-100" : "text-zinc-400"}`}>
+                    <span className={`text-base sm:text-lg font-bold z-10 transition-colors ${isSelected ? "text-purple-100" : "text-zinc-400"}`}>
                       {dayNum}
                     </span>
                     <ProgressRing 
