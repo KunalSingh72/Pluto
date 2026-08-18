@@ -16,7 +16,7 @@ export const useUIStore = create<UIState>()(
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
     }),
     {
-      name: "pluto-ui-storage", // Key used in localStorage
+      name: "pluto-ui-storage", 
     }
   )
 );
